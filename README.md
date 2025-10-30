@@ -18,7 +18,7 @@
 
 ## 🚀 OpenWebUI Installation
 
-1. Copy the entire - [yfinance_ai.py](https://github.com/lkcair/yfinance-ai/yfinance_ai.py) file
+1. Copy the entire - [yfinance_ai.py](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) file
 2. Go to OpenWebUI → **Workspace** → **Tools**
 3. Click **"+"** to create new TOOL
 4. Paste this code
