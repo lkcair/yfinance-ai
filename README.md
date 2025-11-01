@@ -11,19 +11,31 @@
 **License**: MIT
 **Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0
 **Repository**: https://github.com/lucas0/yfinance-ai
+**OpenWebUI Page**. Download yfinance on the OpenWebUI Website: https://openwebui.com/t/lkcair/yfinance_ai_tool
 
 ---
 
 # Quick Start
 
-## 🚀 OpenWebUI Installation
+## 🚀 OpenWebUI Automatic Installation
+
+1. Download yfinance on the [OpenWebUI Website](https://openwebui.com/t/lkcair/yfinance_ai_tool)
+2. Click on **Get**
+3. Write your OpenWebUI address for import to work.
+4. Click on **Save** inside your OpenWebUI installation.
+5. **Enable** on Model or on Chat (VERY IMPORTANT - Either enable the yfinance TOOL on the model itself via Admin Panel; or enable everytime on every new chat).
+6. Start asking questions like:
+   - "What's Apple's stock price?"
+   - "Compare AAPL vs MSFT"
+
+## 🚀 OpenWebUI Manual Installation
 
 1. Copy the entire - [yfinance_ai.py](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) file
 2. Go to OpenWebUI → **Workspace** → **Tools**
 3. Click **"+"** to create new TOOL
 4. Paste this code
-5. **Save** and **Enable**
-6. Activate on Model or inside chat → Enable yfinance on chat.
+5. Click on **Save**
+6. **Enable** on Model or on Chat (VERY IMPORTANT - Either enable the yfinance TOOL on the model itself via Admin Panel; or enable everytime on every new chat).
 7. Start asking questions like:
    - "What's Apple's stock price?"
    - "Compare AAPL vs MSFT"
