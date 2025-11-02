@@ -80,21 +80,7 @@ logger = logging.getLogger(__name__)
 
 # Valid period values for historical data
 VALID_PERIODS = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
-VALID_INTERVALS = [
-    "1m",
-    "2m",
-    "5m",
-    "15m",
-    "30m",
-    "60m",
-    "90m",
-    "1h",
-    "1d",
-    "5d",
-    "1wk",
-    "1mo",
-    "3mo",
-]
+VALID_INTERVALS = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
 FINANCIAL_PERIODS = ["annual", "quarterly", "ttm"]
 
 # Major market indices
@@ -119,33 +105,30 @@ RATE_LIMIT_WINDOW = 60  # seconds
 # VALIDATION MODELS
 # ============================================================
 
-
 class TickerValidator(BaseModel):
     """Validate ticker symbol input"""
-
     ticker: str = Field(..., min_length=1, max_length=10)
 
-    @validator("ticker")
+    @validator('ticker')
     def validate_ticker(cls, v):
         # Allow alphanumeric, dots, hyphens, equals, carets
-        if not re.match(r"^[A-Za-z0-9.\-=^]+$", v):
+        if not re.match(r'^[A-Za-z0-9.\-=^]+$', v):
             raise ValueError(f"Invalid ticker symbol format: {v}")
         return v.upper()
 
 
 class PeriodValidator(BaseModel):
     """Validate period and interval parameters"""
-
     period: str = Field(default="1y")
     interval: str = Field(default="1d")
 
-    @validator("period")
+    @validator('period')
     def validate_period(cls, v):
         if v not in VALID_PERIODS:
             raise ValueError(f"Period must be one of {VALID_PERIODS}")
         return v
 
-    @validator("interval")
+    @validator('interval')
     def validate_interval(cls, v):
         if v not in VALID_INTERVALS:
             raise ValueError(f"Interval must be one of {VALID_INTERVALS}")
@@ -156,10 +139,8 @@ class PeriodValidator(BaseModel):
 # UTILITY DECORATORS & HELPERS
 # ============================================================
 
-
 def safe_ticker_call(func):
     """Decorator for safe yfinance API calls with error handling"""
-
     @wraps(func)
     async def wrapper(self, ticker: str, *args, **kwargs):
         try:
@@ -176,7 +157,6 @@ def safe_ticker_call(func):
         except Exception as e:
             logger.error(f"Error in {func.__name__} for {ticker}: {e}")
             return f"❌ Error fetching data for {ticker}: {str(e)}"
-
     return wrapper
 
 
@@ -229,11 +209,11 @@ def format_date(timestamp: Union[int, float, datetime, None]) -> str:
     try:
         if isinstance(timestamp, (int, float)):
             if timestamp > 946684800:  # After year 2000
-                return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+                return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
         elif isinstance(timestamp, datetime):
-            return timestamp.strftime("%Y-%m-%d")
-        elif hasattr(timestamp, "strftime"):
-            return timestamp.strftime("%Y-%m-%d")
+            return timestamp.strftime('%Y-%m-%d')
+        elif hasattr(timestamp, 'strftime'):
+            return timestamp.strftime('%Y-%m-%d')
     except:
         pass
 
@@ -243,7 +223,6 @@ def format_date(timestamp: Union[int, float, datetime, None]) -> str:
 # ============================================================
 # MAIN TOOLS CLASS - 50+ FINANCIAL DATA TOOLS
 # ============================================================
-
 
 class Tools:
     """
@@ -276,23 +255,28 @@ class Tools:
         """Configuration for yfinance-ai Tools"""
 
         default_period: str = Field(
-            default="1y", description="Default period for historical data queries"
+            default="1y",
+            description="Default period for historical data queries"
         )
         default_interval: str = Field(
-            default="1d", description="Default interval for historical data"
+            default="1d",
+            description="Default interval for historical data"
         )
         enable_caching: bool = Field(
-            default=False, description="Enable response caching (not yet implemented)"
+            default=False,
+            description="Enable response caching (not yet implemented)"
         )
         max_news_items: int = Field(
-            default=10, description="Maximum number of news items to return"
+            default=10,
+            description="Maximum number of news items to return"
         )
         max_comparison_tickers: int = Field(
-            default=10, description="Maximum tickers to compare at once"
+            default=10,
+            description="Maximum tickers to compare at once"
         )
         include_technical_indicators: bool = Field(
             default=False,
-            description="Include technical analysis indicators (not yet implemented)",
+            description="Include technical analysis indicators (not yet implemented)"
         )
 
     def __init__(self):
@@ -324,7 +308,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_stock_price(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get current stock price and key metrics for a ticker symbol.
@@ -346,15 +332,13 @@ class Tools:
             return "⚠️ Rate limit exceeded. Please wait before making more requests."
 
         if __event_emitter__:
-            await __event_emitter__(
-                {
-                    "type": "status",
-                    "data": {
-                        "description": f"📊 Fetching price for {ticker}",
-                        "done": False,
-                    },
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Fetching price for {ticker}",
+                    "done": False
                 }
-            )
+            })
 
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -366,9 +350,9 @@ class Tools:
 
         # Get current price with multiple fallbacks
         current_price = (
-            info.get("currentPrice")
-            or info.get("regularMarketPrice")
-            or info.get("previousClose")
+            info.get("currentPrice") or
+            info.get("regularMarketPrice") or
+            info.get("previousClose")
         )
 
         if current_price:
@@ -391,8 +375,8 @@ class Tools:
         result += f"📉 **52-Week Range:** ${safe_get(info, 'fiftyTwoWeekLow')} - ${safe_get(info, 'fiftyTwoWeekHigh')}\n"
 
         # Day's range
-        day_low = safe_get(info, "dayLow")
-        day_high = safe_get(info, "dayHigh")
+        day_low = safe_get(info, 'dayLow')
+        day_high = safe_get(info, 'dayHigh')
         if day_low != "N/A" and day_high != "N/A":
             result += f"📊 **Day Range:** ${day_low} - ${day_high}\n"
 
@@ -411,21 +395,21 @@ class Tools:
             result += f"📈 **Beta:** {beta:.2f}\n"
 
         if __event_emitter__:
-            await __event_emitter__(
-                {
-                    "type": "status",
-                    "data": {
-                        "description": f"✅ Retrieved {ticker} price data",
-                        "done": True,
-                    },
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved {ticker} price data",
+                    "done": True
                 }
-            )
+            })
 
         return result
 
     @safe_ticker_call
     async def get_fast_info(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get fast-access ticker information (lightweight, quick response).
@@ -442,6 +426,15 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded. Please wait."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"⚡ Fetching quick info for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
 
         try:
@@ -450,11 +443,7 @@ class Tools:
             result = f"**⚡ Quick Info: {ticker}**\n\n"
             result += f"Last Price: ${fast_info.get('lastPrice', 'N/A')}\n"
             result += f"Market Cap: {format_large_number(fast_info.get('marketCap'))}\n"
-            result += (
-                f"Shares Outstanding: {fast_info.get('shares', 'N/A'):,}\n"
-                if fast_info.get("shares")
-                else ""
-            )
+            result += f"Shares Outstanding: {fast_info.get('shares', 'N/A'):,}\n" if fast_info.get('shares') else ""
             result += f"Previous Close: ${fast_info.get('previousClose', 'N/A')}\n"
             result += f"Open: ${fast_info.get('open', 'N/A')}\n"
             result += f"Day High: ${fast_info.get('dayHigh', 'N/A')}\n"
@@ -462,17 +451,26 @@ class Tools:
             result += f"52W High: ${fast_info.get('yearHigh', 'N/A')}\n"
             result += f"52W Low: ${fast_info.get('yearLow', 'N/A')}\n"
 
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved quick info for {ticker}",
+                        "done": True
+                    }
+                })
+
             return result
 
         except Exception as e:
-            logger.warning(
-                f"Fast info not available for {ticker}, falling back to regular info"
-            )
+            logger.warning(f"Fast info not available for {ticker}, falling back to regular info")
             return await self.get_stock_price(ticker, __event_emitter__)
 
     @safe_ticker_call
     async def get_stock_quote(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get detailed quote with bid/ask, day range, and trading info.
@@ -486,6 +484,15 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📋 Retrieving detailed quote for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         info = stock.info
 
@@ -495,10 +502,10 @@ class Tools:
         result = f"**📋 Detailed Quote: {ticker}**\n\n"
 
         # Bid/Ask spread
-        bid = safe_get(info, "bid")
-        ask = safe_get(info, "ask")
-        bid_size = safe_get(info, "bidSize")
-        ask_size = safe_get(info, "askSize")
+        bid = safe_get(info, 'bid')
+        ask = safe_get(info, 'ask')
+        bid_size = safe_get(info, 'bidSize')
+        ask_size = safe_get(info, 'askSize')
 
         result += f"**Bid/Ask Spread:**\n"
         result += f"  Bid: ${bid} × {bid_size}\n"
@@ -517,6 +524,15 @@ class Tools:
             emoji = "📈" if change > 0 else "📉"
             result += f"{emoji} **Change:** {change:+.2f} ({change_pct:+.2f}%)\n"
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved detailed quote for {ticker}",
+                    "done": True
+                }
+            })
+
         return result
 
     @safe_ticker_call
@@ -525,7 +541,7 @@ class Tools:
         ticker: str,
         period: str = "1y",
         interval: str = "1d",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get historical price data for a stock.
@@ -550,6 +566,15 @@ class Tools:
         except ValueError as e:
             return f"❌ {str(e)}"
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving {period} historical data for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period, interval=interval)
 
@@ -563,18 +588,18 @@ class Tools:
         result += f"**Data Points:** {len(hist)}\n\n"
 
         # Latest data
-        latest_date = hist.index[-1].strftime("%Y-%m-%d")
-        latest_close = hist["Close"].iloc[-1]
-        latest_volume = int(hist["Volume"].iloc[-1])
+        latest_date = hist.index[-1].strftime('%Y-%m-%d')
+        latest_close = hist['Close'].iloc[-1]
+        latest_volume = int(hist['Volume'].iloc[-1])
 
         result += f"**Latest ({latest_date}):**\n"
         result += f"  Close: ${latest_close:.2f}\n"
         result += f"  Volume: {latest_volume:,}\n\n"
 
         # Period statistics
-        high = hist["Close"].max()
-        low = hist["Close"].min()
-        avg = hist["Close"].mean()
+        high = hist['Close'].max()
+        low = hist['Close'].min()
+        avg = hist['Close'].mean()
 
         result += f"**Period Statistics:**\n"
         result += f"  Highest: ${high:.2f}\n"
@@ -586,14 +611,97 @@ class Tools:
         result += f"  Total Return: {total_return:+.2f}%\n"
 
         # Volatility (std deviation)
-        volatility = hist["Close"].pct_change().std() * 100
+        volatility = hist['Close'].pct_change().std() * 100
         result += f"  Volatility (σ): {volatility:.2f}%\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved {len(hist)} data points for {ticker}",
+                    "done": True
+                }
+            })
+
+        return result
+
+    @safe_ticker_call
+    async def get_historical_price_on_date(
+        self,
+        ticker: str,
+        date: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get historical price for a specific date.
+
+        Args:
+            ticker: Stock ticker symbol
+            date: Date in YYYY-MM-DD format (e.g., "2024-01-15")
+
+        Returns:
+            Price on that date (or closest trading day)
+
+        Example:
+            >>> await get_historical_price_on_date("AAPL", "2024-01-15")
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        # Parse date
+        try:
+            target_date = dateutil_parser.parse(date)
+        except Exception as e:
+            return f"❌ Invalid date format: {date}. Use YYYY-MM-DD format."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Fetching {ticker} price for {date}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+
+        # Fetch data for a 5-day window around target date (handles weekends/holidays)
+        start_date = target_date - timedelta(days=5)
+        end_date = target_date + timedelta(days=2)
+
+        hist = stock.history(start=start_date, end=end_date)
+
+        if hist.empty:
+            return f"❌ No historical data found for {ticker} around {date}"
+
+        # Find closest trading day to target date
+        closest_date = min(hist.index, key=lambda d: abs((d.date() - target_date.date()).days))
+        price_data = hist.loc[closest_date]
+
+        result = f"**📊 {ticker} - Price on {date}**\n\n"
+        result += f"**Closest Trading Day:** {closest_date.strftime('%Y-%m-%d')}\n"
+        result += f"**Close:** ${price_data['Close']:.2f}\n"
+        result += f"**Open:** ${price_data['Open']:.2f}\n"
+        result += f"**High:** ${price_data['High']:.2f}\n"
+        result += f"**Low:** ${price_data['Low']:.2f}\n"
+        result += f"**Volume:** {int(price_data['Volume']):,}\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Found {ticker} price for {date}",
+                    "done": True
+                }
+            })
 
         return result
 
     @safe_ticker_call
     async def get_isin(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get International Securities Identification Number (ISIN) for a ticker.
@@ -606,6 +714,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔖 Retrieving ISIN for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
 
@@ -620,6 +737,15 @@ class Tools:
             result += f"Quote Type: {safe_get(info, 'quoteType')}\n"
             result += f"Currency: {safe_get(info, 'currency')}\n"
 
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved ISIN for {ticker}",
+                        "done": True
+                    }
+                })
+
             return result
 
         except Exception as e:
@@ -631,7 +757,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_company_info(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get detailed company information and business description.
@@ -645,13 +773,22 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🏢 Retrieving company information for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         info = stock.info
 
         if not info:
             return f"❌ No company information available for {ticker}"
 
-        long_name = safe_get(info, "longName", ticker)
+        long_name = safe_get(info, 'longName', ticker)
         result = f"**🏢 Company Information: {long_name}**\n\n"
 
         # Basic info
@@ -675,15 +812,26 @@ class Tools:
         result += f"**Currency:** {safe_get(info, 'currency')}\n"
 
         # Business summary
-        summary = safe_get(info, "longBusinessSummary")
+        summary = safe_get(info, 'longBusinessSummary')
         if summary and summary != "N/A":
             result += f"\n**📄 Business Summary:**\n{summary}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved company information for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_company_officers(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get company officers and key management.
@@ -697,11 +845,20 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"👔 Retrieving company officers for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         info = stock.info
 
         # Try to get company officers
-        officers = info.get("companyOfficers", [])
+        officers = info.get('companyOfficers', [])
 
         if not officers:
             return f"ℹ️ No officer information available for {ticker}"
@@ -712,14 +869,14 @@ class Tools:
             try:
                 # Handle both dict and non-dict formats
                 if isinstance(officer, dict):
-                    name = officer.get("name", "N/A")
-                    title = officer.get("title", "N/A")
-                    age = officer.get("age", "")
+                    name = officer.get('name', 'N/A')
+                    title = officer.get('title', 'N/A')
+                    age = officer.get('age', '')
 
                     # Handle totalPay which can be dict or int
-                    total_pay = officer.get("totalPay")
+                    total_pay = officer.get('totalPay')
                     if isinstance(total_pay, dict):
-                        pay = total_pay.get("raw")
+                        pay = total_pay.get('raw')
                     elif isinstance(total_pay, (int, float)):
                         pay = total_pay
                     else:
@@ -739,6 +896,15 @@ class Tools:
                 logger.debug(f"Skipping officer entry due to format issue: {e}")
                 continue
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved company officers for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -750,7 +916,7 @@ class Tools:
         self,
         ticker: str,
         period: str = "annual",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get income statement data.
@@ -764,6 +930,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"💼 Retrieving {period} income statement for {ticker}",
+                    "done": False
+                }
+            })
 
         if period not in FINANCIAL_PERIODS:
             return f"❌ Period must be one of {FINANCIAL_PERIODS}"
@@ -809,10 +984,17 @@ class Tools:
                     if "EPS" in metric_name:
                         result += f"{emoji} **{metric_name}:** ${value:.2f}\n"
                     else:
-                        result += (
-                            f"{emoji} **{metric_name}:** {format_large_number(value)}\n"
-                        )
+                        result += f"{emoji} **{metric_name}:** {format_large_number(value)}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved {period} income statement for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
@@ -820,7 +1002,7 @@ class Tools:
         self,
         ticker: str,
         period: str = "annual",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get balance sheet data.
@@ -834,6 +1016,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving {period} balance sheet for {ticker}",
+                    "done": False
+                }
+            })
 
         if period not in ["annual", "quarterly"]:
             return f"❌ Period must be 'annual' or 'quarterly'"
@@ -870,10 +1061,17 @@ class Tools:
             if metric_name in balance.index:
                 value = balance.loc[metric_name, latest_date]
                 if pd.notna(value):
-                    result += (
-                        f"{emoji} **{metric_name}:** {format_large_number(value)}\n"
-                    )
+                    result += f"{emoji} **{metric_name}:** {format_large_number(value)}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved {period} balance sheet for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
@@ -881,7 +1079,7 @@ class Tools:
         self,
         ticker: str,
         period: str = "annual",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get cash flow statement data.
@@ -895,6 +1093,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"💵 Retrieving {period} cash flow for {ticker}",
+                    "done": False
+                }
+            })
 
         if period not in ["annual", "quarterly"]:
             return f"❌ Period must be 'annual' or 'quarterly'"
@@ -929,10 +1136,17 @@ class Tools:
             if metric_name in cashflow.index:
                 value = cashflow.loc[metric_name, latest_date]
                 if pd.notna(value):
-                    result += (
-                        f"{emoji} **{metric_name}:** {format_large_number(value)}\n"
-                    )
+                    result += f"{emoji} **{metric_name}:** {format_large_number(value)}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved {period} cash flow for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -941,7 +1155,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_key_ratios(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get key financial ratios and valuation metrics.
@@ -955,6 +1171,15 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔢 Retrieving key ratios for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         info = stock.info
 
@@ -966,11 +1191,11 @@ class Tools:
         # Valuation Metrics
         result += "**💰 Valuation Metrics**\n"
 
-        trailing_pe = safe_get(info, "trailingPE")
+        trailing_pe = safe_get(info, 'trailingPE')
         if trailing_pe != "N/A" and isinstance(trailing_pe, (int, float)):
             result += f"  P/E (Trailing): {trailing_pe:.2f}\n"
 
-        forward_pe = safe_get(info, "forwardPE")
+        forward_pe = safe_get(info, 'forwardPE')
         if forward_pe != "N/A" and isinstance(forward_pe, (int, float)):
             result += f"  P/E (Forward): {forward_pe:.2f}\n"
 
@@ -983,9 +1208,7 @@ class Tools:
         # Profitability
         result += "**📈 Profitability**\n"
         result += f"  Profit Margin: {format_percentage(info.get('profitMargins'))}\n"
-        result += (
-            f"  Operating Margin: {format_percentage(info.get('operatingMargins'))}\n"
-        )
+        result += f"  Operating Margin: {format_percentage(info.get('operatingMargins'))}\n"
         result += f"  Gross Margin: {format_percentage(info.get('grossMargins'))}\n"
         result += f"  ROE: {format_percentage(info.get('returnOnEquity'))}\n"
         result += f"  ROA: {format_percentage(info.get('returnOnAssets'))}\n\n"
@@ -999,6 +1222,15 @@ class Tools:
         result += f"  Total Cash: {format_large_number(info.get('totalCash'))}\n"
         result += f"  Free Cash Flow: {format_large_number(info.get('freeCashflow'))}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved key ratios for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -1010,7 +1242,7 @@ class Tools:
         self,
         ticker: str,
         period: str = "5y",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get dividend payment history and yield information.
@@ -1024,6 +1256,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"💎 Retrieving dividend history for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -1040,7 +1281,6 @@ class Tools:
             # Handle timezone-aware dates
             if hasattr(dividends.index, "tz") and dividends.index.tz is not None:
                 import pytz
-
                 cutoff_date = pytz.utc.localize(cutoff_date)
                 if dividends.index.tz != pytz.utc:
                     cutoff_date = cutoff_date.astimezone(dividends.index.tz)
@@ -1078,11 +1318,22 @@ class Tools:
             avg_div = dividends.mean()
             result += f"**Average Dividend:** ${avg_div:.4f}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved dividend history for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_stock_splits(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get stock split history.
@@ -1096,6 +1347,15 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✂️ Retrieving stock split history for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         splits = stock.splits
 
@@ -1106,14 +1366,25 @@ class Tools:
         result += f"**Total Splits:** {len(splits)}\n\n"
 
         for date, ratio in splits.items():
-            date_str = date.strftime("%Y-%m-%d")
+            date_str = date.strftime('%Y-%m-%d')
             result += f"📅 {date_str}: {ratio}:1 split\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved stock split history for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_corporate_actions(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get all corporate actions (dividends + splits combined).
@@ -1126,6 +1397,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📋 Retrieving corporate actions for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         actions = stock.actions
@@ -1140,21 +1420,32 @@ class Tools:
         recent_actions = actions.tail(20)
 
         for date, row in recent_actions.iterrows():
-            date_str = date.strftime("%Y-%m-%d")
+            date_str = date.strftime('%Y-%m-%d')
 
-            dividend = row.get("Dividends", 0)
-            split = row.get("Stock Splits", 0)
+            dividend = row.get('Dividends', 0)
+            split = row.get('Stock Splits', 0)
 
             if dividend > 0:
                 result += f"💰 {date_str}: Dividend ${dividend:.4f}\n"
             if split > 0:
                 result += f"🔀 {date_str}: Stock Split {split}:1\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved corporate actions for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_capital_gains(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get capital gains distributions (primarily for funds/ETFs).
@@ -1168,33 +1459,74 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"💰 Retrieving capital gains for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
 
         try:
             capital_gains = stock.capital_gains
 
-            if capital_gains is None or (
-                hasattr(capital_gains, "empty") and capital_gains.empty
-            ):
+            if capital_gains is None or (hasattr(capital_gains, 'empty') and capital_gains.empty):
                 # This is expected for stocks (only ETFs/funds have capital gains)
                 info = stock.info
-                quote_type = info.get("quoteType", "")
-                if quote_type.upper() in ["EQUITY", "STOCK"]:
+                quote_type = info.get('quoteType', '')
+                if quote_type.upper() in ['EQUITY', 'STOCK']:
+                    if __event_emitter__:
+                        await __event_emitter__({
+                            "type": "status",
+                            "data": {
+                                "description": f"✅ Retrieved capital gains for {ticker}",
+                                "done": True
+                            }
+                        })
                     return f"ℹ️ {ticker} is a stock. Capital gains distributions are only for ETFs/mutual funds."
+
+                if __event_emitter__:
+                    await __event_emitter__({
+                        "type": "status",
+                        "data": {
+                            "description": f"✅ Retrieved capital gains for {ticker}",
+                            "done": True
+                        }
+                    })
                 return f"ℹ️ No capital gains distributions available for {ticker}"
 
             result = f"**💵 Capital Gains Distributions: {ticker}**\n\n"
 
             for date, amount in capital_gains.tail(20).items():
                 try:
-                    date_str = date.strftime("%Y-%m-%d")
+                    date_str = date.strftime('%Y-%m-%d')
                     result += f"{date_str}: ${amount:.4f}\n"
                 except:
                     result += f"{str(date)[:10]}: ${amount:.4f}\n"
 
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved capital gains for {ticker}",
+                        "done": True
+                    }
+                })
+
             return result
 
         except Exception as e:
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved capital gains for {ticker}",
+                        "done": True
+                    }
+                })
             return f"ℹ️ Capital gains data not available for {ticker}. This is normal for stocks (only ETFs/funds distribute capital gains)."
 
     # ============================================================
@@ -1203,7 +1535,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_earnings_dates(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get upcoming and past earnings dates with estimates.
@@ -1216,6 +1550,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📅 Retrieving earnings dates for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -1261,11 +1604,22 @@ class Tools:
         except:
             pass
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved earnings dates for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_earnings_history(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get historical earnings data with annual and quarterly figures.
@@ -1278,6 +1632,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📈 Retrieving earnings history for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
 
@@ -1296,17 +1659,15 @@ class Tools:
                 revenue_row = None
                 income_row = None
 
-                if "Total Revenue" in income_stmt.index:
-                    revenue_row = income_stmt.loc["Total Revenue"]
-                if "Net Income" in income_stmt.index:
-                    income_row = income_stmt.loc["Net Income"]
+                if 'Total Revenue' in income_stmt.index:
+                    revenue_row = income_stmt.loc['Total Revenue']
+                if 'Net Income' in income_stmt.index:
+                    income_row = income_stmt.loc['Net Income']
 
                 if revenue_row is not None and income_row is not None:
                     # Get last 5 years
                     for col in income_stmt.columns[:5]:
-                        year = (
-                            col.strftime("%Y") if hasattr(col, "strftime") else str(col)
-                        )
+                        year = col.strftime('%Y') if hasattr(col, 'strftime') else str(col)
                         revenue = revenue_row[col] if col in revenue_row.index else 0
                         net_income = income_row[col] if col in income_row.index else 0
 
@@ -1322,17 +1683,17 @@ class Tools:
                 revenue_row = None
                 income_row = None
 
-                if "Total Revenue" in quarterly_income.index:
-                    revenue_row = quarterly_income.loc["Total Revenue"]
-                if "Net Income" in quarterly_income.index:
-                    income_row = quarterly_income.loc["Net Income"]
+                if 'Total Revenue' in quarterly_income.index:
+                    revenue_row = quarterly_income.loc['Total Revenue']
+                if 'Net Income' in quarterly_income.index:
+                    income_row = quarterly_income.loc['Net Income']
 
                 if revenue_row is not None and income_row is not None:
                     # Get last 4 quarters
                     for col in quarterly_income.columns[:4]:
                         # Format quarter date
-                        if hasattr(col, "strftime"):
-                            quarter = col.strftime("%Y-%m-%d")
+                        if hasattr(col, 'strftime'):
+                            quarter = col.strftime('%Y-%m-%d')
                         else:
                             quarter = str(col)[:10]
 
@@ -1353,7 +1714,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_analyst_estimates(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get analyst estimates for earnings, revenue, and EPS.
@@ -1366,6 +1729,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔍 Retrieving analyst estimates for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -1387,7 +1759,7 @@ class Tools:
         # Try to get more detailed estimates
         try:
             # Some versions of yfinance have analyst_price_targets
-            targets = info.get("analyst_price_targets", {})
+            targets = info.get('analyst_price_targets', {})
             if targets:
                 result += "**Price Targets:**\n"
                 for key, value in targets.items():
@@ -1395,11 +1767,22 @@ class Tools:
         except:
             pass
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved analyst estimates for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_growth_estimates(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get analyst growth estimates.
@@ -1412,6 +1795,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving growth estimates for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -1429,6 +1821,15 @@ class Tools:
         result += f"  52-Week Change: {format_percentage(info.get('52WeekChange'))}\n"
         result += f"  S&P500 52-Week Change: {format_percentage(info.get('SandP52WeekChange'))}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved growth estimates for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -1437,7 +1838,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_analyst_recommendations(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get analyst recommendations and ratings.
@@ -1451,6 +1854,15 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"⭐ Retrieving analyst recommendations for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
         info = stock.info
 
@@ -1462,9 +1874,7 @@ class Tools:
         result += f"  High Target: ${safe_get(info, 'targetHighPrice')}\n"
         result += f"  Low Target: ${safe_get(info, 'targetLowPrice')}\n"
         result += f"  Median Target: ${safe_get(info, 'targetMedianPrice')}\n"
-        result += (
-            f"  Number of Analysts: {safe_get(info, 'numberOfAnalystOpinions')}\n\n"
-        )
+        result += f"  Number of Analysts: {safe_get(info, 'numberOfAnalystOpinions')}\n\n"
 
         # Recommendation consensus
         recommendation = info.get("recommendationMean")
@@ -1518,6 +1928,15 @@ class Tools:
         if not recommendation and not info.get("targetMeanPrice"):
             result += "\nℹ️ No analyst recommendation data available\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved analyst recommendations for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -1526,7 +1945,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_institutional_holders(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get major institutional holders and their ownership.
@@ -1539,6 +1960,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🏛️ Retrieving institutional holders for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         holders = stock.institutional_holders
@@ -1568,11 +1998,22 @@ class Tools:
             else:
                 result += f"  Value: {value}\n\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved institutional holders for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_major_holders(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get major holders summary (institutions, insiders, public float).
@@ -1585,6 +2026,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"👥 Retrieving major holders for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
 
@@ -1599,21 +2049,21 @@ class Tools:
             # New format: DataFrame with index as breakdown names and 'Value' column
             # Convert breakdown names to readable format
             breakdown_map = {
-                "insidersPercentHeld": "Insiders Percent Held",
-                "institutionsPercentHeld": "Institutions Percent Held",
-                "institutionsFloatPercentHeld": "Institutions Float Percent Held",
-                "institutionsCount": "Number of Institutions",
+                'insidersPercentHeld': 'Insiders Percent Held',
+                'institutionsPercentHeld': 'Institutions Percent Held',
+                'institutionsFloatPercentHeld': 'Institutions Float Percent Held',
+                'institutionsCount': 'Number of Institutions'
             }
 
             for idx, row in major_holders.iterrows():
                 breakdown = idx
-                value = row.get("Value", row.iloc[0] if len(row) > 0 else "N/A")
+                value = row.get('Value', row.iloc[0] if len(row) > 0 else 'N/A')
 
                 # Get readable name
                 readable_name = breakdown_map.get(breakdown, breakdown)
 
                 # Format value based on type
-                if breakdown == "institutionsCount":
+                if breakdown == 'institutionsCount':
                     result += f"{readable_name}: {int(value):,}\n"
                 elif isinstance(value, (int, float)):
                     result += f"{readable_name}: {value*100:.2f}%\n"
@@ -1627,7 +2077,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_mutualfund_holders(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get mutual fund holders.
@@ -1640,6 +2092,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving mutual fund holders for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
 
@@ -1655,23 +2116,13 @@ class Tools:
             for idx, row in fund_holders.head(10).iterrows():
                 holder = row.get("Holder", "N/A")
                 shares = row.get("Shares", 0)
-                pct_held = row.get(
-                    "pctHeld", row.get("% Out", 0)
-                )  # Try new name, fallback to old
+                pct_held = row.get("pctHeld", row.get("% Out", 0))  # Try new name, fallback to old
                 value = row.get("Value", 0)
                 date_reported = row.get("Date Reported", "N/A")
 
                 result += f"**{holder}**\n"
-                result += (
-                    f"  Date Reported: {date_reported}\n"
-                    if date_reported != "N/A"
-                    else ""
-                )
-                result += (
-                    f"  Shares: {shares:,}\n"
-                    if isinstance(shares, (int, float))
-                    else f"  Shares: {shares}\n"
-                )
+                result += f"  Date Reported: {date_reported}\n" if date_reported != "N/A" else ""
+                result += f"  Shares: {shares:,}\n" if isinstance(shares, (int, float)) else f"  Shares: {shares}\n"
 
                 # Format percent held
                 if isinstance(pct_held, (int, float)):
@@ -1688,7 +2139,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_insider_transactions(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get recent insider trading activity.
@@ -1701,6 +2154,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔐 Retrieving insider transactions for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
 
@@ -1725,11 +2187,7 @@ class Tools:
             start_date = row.get("Start Date", "N/A")
 
             # Emoji based on transaction type
-            emoji = (
-                "💰"
-                if "Buy" in str(transaction)
-                else "💸" if "Sale" in str(transaction) else "📄"
-            )
+            emoji = "💰" if "Buy" in str(transaction) else "💸" if "Sale" in str(transaction) else "📄"
 
             result += f"{emoji} **{insider}** - {transaction}\n"
 
@@ -1740,11 +2198,22 @@ class Tools:
 
             result += f"  Date: {start_date}\n\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved insider transactions for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_insider_purchases(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get insider purchases only (filtered for buys).
@@ -1757,6 +2226,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔐 Retrieving insider purchases for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
 
@@ -1775,11 +2253,7 @@ class Tools:
                 start_date = row.get("Start Date", "N/A")
 
                 result += f"**{insider}**\n"
-                result += (
-                    f"  Shares: {abs(shares):,.0f}\n"
-                    if isinstance(shares, (int, float))
-                    else f"  Shares: {shares}\n"
-                )
+                result += f"  Shares: {abs(shares):,.0f}\n" if isinstance(shares, (int, float)) else f"  Shares: {shares}\n"
                 result += f"  Transaction: {transaction}\n"
                 result += f"  Date: {start_date}\n\n"
 
@@ -1791,7 +2265,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_insider_roster_holders(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get insider roster (list of company insiders).
@@ -1805,12 +2281,21 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔐 Retrieving insider roster for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
 
         try:
             roster = stock.insider_roster_holders
 
-            if roster is None or (hasattr(roster, "empty") and roster.empty):
+            if roster is None or (hasattr(roster, 'empty') and roster.empty):
                 return f"ℹ️ No insider roster data available for {ticker}"
 
             result = f"**👥 Insider Roster: {ticker}**\n\n"
@@ -1818,33 +2303,17 @@ class Tools:
             for idx, row in roster.iterrows():
                 try:
                     # Safely get values with fallbacks
-                    name = (
-                        safe_get(row, "Name", "N/A")
-                        if hasattr(row, "get")
-                        else row.get("Name", "N/A") if isinstance(row, dict) else "N/A"
-                    )
-                    position = (
-                        safe_get(row, "Position", "N/A")
-                        if hasattr(row, "get")
-                        else (
-                            row.get("Position", "N/A")
-                            if isinstance(row, dict)
-                            else "N/A"
-                        )
-                    )
+                    name = safe_get(row, "Name", "N/A") if hasattr(row, 'get') else row.get("Name", "N/A") if isinstance(row, dict) else "N/A"
+                    position = safe_get(row, "Position", "N/A") if hasattr(row, 'get') else row.get("Position", "N/A") if isinstance(row, dict) else "N/A"
 
                     # Handle Most Recent Transaction which can be dict or other format
-                    transaction = (
-                        row.get("Most Recent Transaction")
-                        if hasattr(row, "get")
-                        else None
-                    )
+                    transaction = row.get("Most Recent Transaction") if hasattr(row, 'get') else None
                     shares = None
 
                     if transaction:
                         if isinstance(transaction, dict):
                             shares = transaction.get("Shares")
-                        elif hasattr(transaction, "get"):
+                        elif hasattr(transaction, 'get'):
                             shares = transaction.get("Shares")
 
                     result += f"**{name}**\n"
@@ -1853,9 +2322,7 @@ class Tools:
                         result += f"  Shares: {shares:,}\n"
                     result += "\n"
                 except Exception as row_error:
-                    logger.debug(
-                        f"Skipping roster row due to format issue: {row_error}"
-                    )
+                    logger.debug(f"Skipping roster row due to format issue: {row_error}")
                     continue
 
             return result
@@ -1872,7 +2339,7 @@ class Tools:
         self,
         ticker: str,
         expiration: str = "",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get options chain data (calls and puts).
@@ -1886,6 +2353,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"⛓️ Retrieving options chain for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         expirations = stock.options
@@ -1951,11 +2427,22 @@ class Tools:
 
                 result += f"  Strike: ${strike} | Last: ${last_price} | Vol: {volume} | OI: {oi} | IV: {iv}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved options chain for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     @safe_ticker_call
     async def get_options_expirations(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get all available options expiration dates.
@@ -1968,6 +2455,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📅 Retrieving options expirations for {ticker}",
+                    "done": False
+                }
+            })
 
         stock = yf.Ticker(ticker)
         expirations = stock.options
@@ -1992,6 +2488,15 @@ class Tools:
                 result += f"  {exp}\n"
             result += "\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved options expirations for {ticker}",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -2003,7 +2508,7 @@ class Tools:
         self,
         ticker: str,
         limit: int = 10,
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get recent news articles about a stock.
@@ -2017,6 +2522,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📰 Retrieving news for {ticker}",
+                    "done": False
+                }
+            })
 
         # Respect configured limit
         limit = min(limit, self.valves.max_news_items)
@@ -2044,18 +2558,12 @@ class Tools:
 
                     # Publisher from provider or top-level
                     provider = content.get("provider", {})
-                    publisher = provider.get(
-                        "displayName", article.get("publisher", "Unknown")
-                    )
+                    publisher = provider.get("displayName", article.get("publisher", "Unknown"))
 
                     # Link from canonicalUrl or clickThroughUrl or top-level
                     canonical_url = content.get("canonicalUrl", {})
                     click_url = content.get("clickThroughUrl", {})
-                    link = (
-                        canonical_url.get("url", "")
-                        or click_url.get("url", "")
-                        or article.get("link", "")
-                    )
+                    link = canonical_url.get("url", "") or click_url.get("url", "") or article.get("link", "")
 
                     # Date from pubDate or providerPublishTime
                     pub_date = content.get("pubDate") or content.get("displayTime")
@@ -2066,23 +2574,17 @@ class Tools:
                     if pub_date:
                         try:
                             # Handle ISO format (2025-10-28T22:54:31Z)
-                            date = dateutil_parser.parse(pub_date).strftime(
-                                "%Y-%m-%d %H:%M"
-                            )
+                            date = dateutil_parser.parse(pub_date).strftime("%Y-%m-%d %H:%M")
                         except:
                             try:
                                 # Fallback to timestamp
                                 if isinstance(pub_date, (int, float)):
-                                    date = datetime.fromtimestamp(pub_date).strftime(
-                                        "%Y-%m-%d %H:%M"
-                                    )
+                                    date = datetime.fromtimestamp(pub_date).strftime("%Y-%m-%d %H:%M")
                             except:
                                 date = "Unknown date"
                     elif publish_time:
                         try:
-                            date = datetime.fromtimestamp(publish_time).strftime(
-                                "%Y-%m-%d %H:%M"
-                            )
+                            date = datetime.fromtimestamp(publish_time).strftime("%Y-%m-%d %H:%M")
                         except:
                             date = "Unknown date"
 
@@ -2095,9 +2597,7 @@ class Tools:
                             result += f"   🔗 {link}\n"
                         result += "\n"
                 except Exception as article_error:
-                    logger.debug(
-                        f"Skipping news article due to format issue: {article_error}"
-                    )
+                    logger.debug(f"Skipping news article due to format issue: {article_error}")
                     continue
 
             if articles_displayed == 0:
@@ -2110,7 +2610,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_sec_filings(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get recent SEC filings (10-K, 10-Q, 8-K, etc.).
@@ -2124,12 +2626,21 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📄 Retrieving SEC filings for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
 
         try:
             filings = stock.sec_filings
 
-            if filings is None or (hasattr(filings, "empty") and filings.empty):
+            if filings is None or (hasattr(filings, 'empty') and filings.empty):
                 return f"ℹ️ No SEC filing data available for {ticker}"
 
             result = f"**📄 Recent SEC Filings: {ticker}**\n\n"
@@ -2137,10 +2648,10 @@ class Tools:
             # Handle different return types
             if isinstance(filings, list):
                 for filing in filings[:15]:
-                    filing_type = filing.get("type", "N/A")
-                    date = filing.get("date", "N/A")
-                    title = filing.get("title", "")
-                    url = filing.get("edgarUrl", "")
+                    filing_type = filing.get('type', 'N/A')
+                    date = filing.get('date', 'N/A')
+                    title = filing.get('title', '')
+                    url = filing.get('edgarUrl', '')
 
                     result += f"**{filing_type}** - {date}\n"
                     if title:
@@ -2161,7 +2672,8 @@ class Tools:
     # ============================================================
 
     async def get_market_indices(
-        self, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get current prices for major market indices.
@@ -2171,6 +2683,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📈 Retrieving market indices",
+                    "done": False
+                }
+            })
 
         result = "**📊 Major Market Indices**\n\n"
 
@@ -2201,10 +2722,21 @@ class Tools:
                 logger.warning(f"Error fetching {name}: {idx_error}")
                 result += f"⚠️ **{name}** ({symbol}): Data unavailable\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved market indices",
+                    "done": True
+                }
+            })
         return result
 
     async def compare_stocks(
-        self, tickers: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        tickers: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Compare key metrics across multiple stocks.
@@ -2217,6 +2749,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"⚖️ Comparing stocks",
+                    "done": False
+                }
+            })
 
         ticker_list = [t.strip().upper() for t in tickers.split(",")]
 
@@ -2244,9 +2785,7 @@ class Tools:
                 try:
                     hist = stock.history(period="1y")
                     if not hist.empty:
-                        week_52_return = (
-                            (hist["Close"].iloc[-1] / hist["Close"].iloc[0]) - 1
-                        ) * 100
+                        week_52_return = ((hist["Close"].iloc[-1] / hist["Close"].iloc[0]) - 1) * 100
                     else:
                         week_52_return = info.get("52WeekChange")
                 except:
@@ -2260,37 +2799,27 @@ class Tools:
                 # Format dividend yield
                 div_yield_display = format_percentage(div_yield) if div_yield else "N/A"
 
-                metrics.append(
-                    {
-                        "Ticker": ticker_symbol,
-                        "Price": f"${price:.2f}" if price else "N/A",
-                        "Market Cap": format_large_number(market_cap),
-                        "P/E": f"{pe_ratio:.2f}" if pe_ratio else "N/A",
-                        "Div Yield": div_yield_display,
-                        "52W Return": (
-                            f"{week_52_return:.2f}%" if week_52_return else "N/A"
-                        ),
-                        "Beta": (
-                            f"{info.get('beta'):.2f}" if info.get("beta") else "N/A"
-                        ),
-                    }
-                )
+                metrics.append({
+                    "Ticker": ticker_symbol,
+                    "Price": f"${price:.2f}" if price else "N/A",
+                    "Market Cap": format_large_number(market_cap),
+                    "P/E": f"{pe_ratio:.2f}" if pe_ratio else "N/A",
+                    "Div Yield": div_yield_display,
+                    "52W Return": f"{week_52_return:.2f}%" if week_52_return else "N/A",
+                    "Beta": f"{info.get('beta'):.2f}" if info.get('beta') else "N/A",
+                })
 
             except Exception as ticker_error:
-                logger.warning(
-                    f"Error fetching data for {ticker_symbol}: {ticker_error}"
-                )
-                metrics.append(
-                    {
-                        "Ticker": ticker_symbol,
-                        "Price": "Error",
-                        "Market Cap": "Error",
-                        "P/E": "Error",
-                        "Div Yield": "Error",
-                        "52W Return": "Error",
-                        "Beta": "Error",
-                    }
-                )
+                logger.warning(f"Error fetching data for {ticker_symbol}: {ticker_error}")
+                metrics.append({
+                    "Ticker": ticker_symbol,
+                    "Price": "Error",
+                    "Market Cap": "Error",
+                    "P/E": "Error",
+                    "Div Yield": "Error",
+                    "52W Return": "Error",
+                    "Beta": "Error",
+                })
 
         # Display comparison
         metric_names = ["Price", "Market Cap", "P/E", "Div Yield", "52W Return", "Beta"]
@@ -2300,10 +2829,20 @@ class Tools:
             for m in metrics:
                 result += f"  {m['Ticker']}: {m[metric_name]}\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Compared stocks",
+                    "done": True
+                }
+            })
         return result
 
     async def get_sector_performance(
-        self, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get performance of major market sectors.
@@ -2313,6 +2852,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving sector performance",
+                    "done": False
+                }
+            })
 
         # Major sector ETFs
         sectors = {
@@ -2345,43 +2893,46 @@ class Tools:
 
                 # Calculate YTD return
                 if not hist.empty:
-                    ytd_return = (
-                        (hist["Close"].iloc[-1] / hist["Close"].iloc[0]) - 1
-                    ) * 100
+                    ytd_return = ((hist["Close"].iloc[-1] / hist["Close"].iloc[0]) - 1) * 100
                 else:
                     ytd_return = None
 
                 emoji = "📈" if change > 0 else "📉" if change < 0 else "➖"
 
-                sector_data.append(
-                    {
-                        "name": sector_name,
-                        "symbol": etf_symbol,
-                        "price": price,
-                        "change": change,
-                        "change_pct": change_pct,
-                        "ytd_return": ytd_return,
-                        "emoji": emoji,
-                    }
-                )
+                sector_data.append({
+                    "name": sector_name,
+                    "symbol": etf_symbol,
+                    "price": price,
+                    "change": change,
+                    "change_pct": change_pct,
+                    "ytd_return": ytd_return,
+                    "emoji": emoji
+                })
 
             except Exception as e:
                 logger.warning(f"Error fetching {sector_name}: {e}")
 
         # Sort by daily performance
-        sector_data.sort(
-            key=lambda x: x["change_pct"] if x["change_pct"] else 0, reverse=True
-        )
+        sector_data.sort(key=lambda x: x["change_pct"] if x["change_pct"] else 0, reverse=True)
 
         result += "**Today's Performance:**\n"
         for s in sector_data:
             result += f"{s['emoji']} **{s['name']}** ({s['symbol']}): "
-            if s["price"]:
+            if s['price']:
                 result += f"${s['price']:.2f} "
-            if s["change"] and s["change_pct"]:
+            if s['change'] and s['change_pct']:
                 result += f"({s['change']:+.2f}, {s['change_pct']:+.2f}%)"
             result += "\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved sector performance",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -2390,7 +2941,9 @@ class Tools:
 
     @safe_ticker_call
     async def get_sustainability(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get ESG (Environmental, Social, Governance) scores and sustainability metrics.
@@ -2404,17 +2957,24 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🌱 Retrieving ESG data for {ticker}",
+                    "done": False
+                }
+            })
+
         stock = yf.Ticker(ticker)
 
         try:
             sustainability = stock.sustainability
 
-            if sustainability is None or (
-                hasattr(sustainability, "empty") and sustainability.empty
-            ):
+            if sustainability is None or (hasattr(sustainability, 'empty') and sustainability.empty):
                 # Check if it's a large cap stock that should have ESG data
                 info = stock.info
-                market_cap = info.get("marketCap", 0)
+                market_cap = info.get('marketCap', 0)
                 if market_cap and market_cap > 10_000_000_000:  # >$10B
                     return f"ℹ️ ESG/Sustainability data for {ticker} may not be available via yfinance. Large companies typically have ESG data but it may not be accessible through this API."
                 return f"ℹ️ No ESG/Sustainability data available for {ticker}. ESG data is typically available only for large-cap companies."
@@ -2449,7 +3009,7 @@ class Tools:
         tickers: str,
         period: str = "1mo",
         interval: str = "1d",
-        __event_emitter__: Callable[[dict], Any] = None,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Download historical data for multiple tickers at once (bulk operation).
@@ -2465,6 +3025,15 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🌱 Retrieving ESG data for {ticker}",
+                    "done": False
+                }
+            })
+
         # Parse tickers
         ticker_list = tickers.replace(",", " ").split()
         ticker_list = [t.strip().upper() for t in ticker_list if t.strip()]
@@ -2477,13 +3046,7 @@ class Tools:
 
         try:
             # Use yfinance download function
-            data = yf.download(
-                ticker_list,
-                period=period,
-                interval=interval,
-                group_by="ticker",
-                progress=False,
-            )
+            data = yf.download(ticker_list, period=period, interval=interval, group_by='ticker', progress=False)
 
             if data.empty:
                 return "❌ No data downloaded"
@@ -2517,7 +3080,9 @@ class Tools:
             return f"❌ Error downloading data: {str(e)}"
 
     async def get_trending_tickers(
-        self, count: int = 10, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        count: int = 10,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get trending/most active tickers (note: limited availability in yfinance).
@@ -2531,26 +3096,22 @@ class Tools:
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
 
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔥 Retrieving trending tickers",
+                    "done": False
+                }
+            })
+
         # This feature may not be available in all yfinance versions
         result = "**📈 Trending Tickers**\n\n"
-        result += (
-            "ℹ️ Note: Trending tickers feature has limited availability in yfinance.\n"
-        )
+        result += "ℹ️ Note: Trending tickers feature has limited availability in yfinance.\n"
         result += "For the most accurate trending data, please check Yahoo Finance website directly.\n\n"
 
         # Provide some popular/most traded tickers as reference
-        popular_tickers = [
-            "SPY",
-            "QQQ",
-            "AAPL",
-            "MSFT",
-            "TSLA",
-            "NVDA",
-            "AMD",
-            "AMZN",
-            "GOOGL",
-            "META",
-        ]
+        popular_tickers = ["SPY", "QQQ", "AAPL", "MSFT", "TSLA", "NVDA", "AMD", "AMZN", "GOOGL", "META"]
 
         result += "**Most Popular/Traded Tickers:**\n"
         for ticker_symbol in popular_tickers[:count]:
@@ -2562,12 +3123,19 @@ class Tools:
 
                 emoji = "📈" if change_pct > 0 else "📉" if change_pct < 0 else "➖"
 
-                result += (
-                    f"{emoji} {ticker_symbol}: ${price:.2f} ({change_pct:+.2f}%)\n"
-                )
+                result += f"{emoji} {ticker_symbol}: ${price:.2f} ({change_pct:+.2f}%)\n"
             except:
                 result += f"  {ticker_symbol}: Data unavailable\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved trending tickers",
+                    "done": True
+                }
+            })
         return result
 
     # ============================================================
@@ -2575,7 +3143,9 @@ class Tools:
     # ============================================================
 
     async def search_ticker(
-        self, query: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        query: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Search for ticker symbols by company name or keyword.
@@ -2588,6 +3158,15 @@ class Tools:
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔎 Searching for ticker",
+                    "done": False
+                }
+            })
 
         result = f"**🔍 Search Results for: {query}**\n\n"
         result += "ℹ️ Note: Ticker search via yfinance has limited capabilities.\n"
@@ -2620,10 +3199,21 @@ class Tools:
             result += "- Searching on Yahoo Finance website\n"
             result += "- Checking alternative exchanges (e.g., .L for London, .TO for Toronto)\n"
 
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Search complete",
+                    "done": True
+                }
+            })
         return result
 
     async def validate_ticker(
-        self, ticker: str, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Validate if a ticker symbol exists and is tradeable.
@@ -2659,7 +3249,8 @@ class Tools:
             return f"❌ Error validating ticker: {str(e)}"
 
     async def get_api_status(
-        self, __event_emitter__: Callable[[dict], Any] = None
+        self,
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         Get API status and usage information.
@@ -2691,7 +3282,9 @@ class Tools:
     # ============================================================
 
     async def run_self_test(
-        self, ticker: str = "SPY", __event_emitter__: Callable[[dict], Any] = None
+        self,
+        ticker: str = "SPY",
+        __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
         🧪 Run comprehensive self-test of all 50+ yfinance-ai tools.
@@ -2712,21 +3305,19 @@ class Tools:
             "Verify yfinance-ai is working"
         """
         if __event_emitter__:
-            await __event_emitter__(
-                {
-                    "type": "status",
-                    "data": {
-                        "description": "🧪 Running comprehensive yfinance-ai self-test...",
-                        "done": False,
-                    },
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": "🧪 Running comprehensive yfinance-ai self-test...",
+                    "done": False
                 }
-            )
+            })
 
         result = "**🧪 yfinance-ai Self-Test Report**\n\n"
         result += f"**Test Ticker:** {ticker} (S&P 500 ETF - chosen for comprehensive data coverage)\n"
         result += f"**Test Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         result += f"**Version:** 2.0.0\n\n"
-        result += "=" * 60 + "\n\n"
+        result += "="*60 + "\n\n"
 
         test_results = {}
         category_results = {}
@@ -2737,72 +3328,51 @@ class Tools:
 
             # Extract price data
             if "Current Price:" in response or "Last Price:" in response:
-                for line in response.split("\n"):
-                    if "Price:" in line or "Close:" in line:
+                for line in response.split('\n'):
+                    if 'Price:' in line or 'Close:' in line:
                         samples.append(line.strip())
                         if len(samples) >= 2:
                             break
 
             # Extract financial data
-            elif (
-                "Revenue" in response
-                or "Total Assets" in response
-                or "Cash Flow" in response
-            ):
-                for line in response.split("\n"):
-                    if any(
-                        keyword in line
-                        for keyword in [
-                            "Revenue",
-                            "Assets",
-                            "Earnings",
-                            "Cash Flow",
-                            "Debt",
-                        ]
-                    ):
+            elif "Revenue" in response or "Total Assets" in response or "Cash Flow" in response:
+                for line in response.split('\n'):
+                    if any(keyword in line for keyword in ['Revenue', 'Assets', 'Earnings', 'Cash Flow', 'Debt']):
                         samples.append(line.strip())
                         if len(samples) >= 2:
                             break
 
             # Extract ratio data
             elif "P/E" in response or "Ratio" in response:
-                for line in response.split("\n"):
-                    if "P/E" in line or "Ratio" in line or "Margin" in line:
+                for line in response.split('\n'):
+                    if 'P/E' in line or 'Ratio' in line or 'Margin' in line:
                         samples.append(line.strip())
                         if len(samples) >= 2:
                             break
 
             # Extract dividend data
             elif "Dividend" in response or "Yield" in response:
-                for line in response.split("\n"):
-                    if "Yield" in line or "Rate" in line or "$" in line:
+                for line in response.split('\n'):
+                    if 'Yield' in line or 'Rate' in line or '$' in line:
                         samples.append(line.strip())
                         if len(samples) >= 2:
                             break
 
             # Extract news/data count
             elif "Recent News" in response or "Filings" in response:
-                count = response.count("\n")
+                count = response.count('\n')
                 samples.append(f"Found {count} lines of data")
 
             # Extract holder data
             elif "Holders" in response or "Institutional" in response:
-                lines = [
-                    l
-                    for l in response.split("\n")
-                    if l.strip() and not l.startswith("**")
-                ]
+                lines = [l for l in response.split('\n') if l.strip() and not l.startswith('**')]
                 if lines:
                     samples.append(f"Found {len(lines)} data lines")
 
             # Default: show first meaningful line
             if not samples:
-                for line in response.split("\n"):
-                    if (
-                        line.strip()
-                        and not line.startswith("**")
-                        and not line.startswith("=")
-                    ):
+                for line in response.split('\n'):
+                    if line.strip() and not line.startswith('**') and not line.startswith('='):
                         samples.append(line.strip()[:80])
                         break
 
@@ -2820,12 +3390,8 @@ class Tools:
 
             # Expected no-data scenarios (not failures)
             optional_data_tools = [
-                "get_stock_splits",
-                "get_capital_gains",
-                "get_insider_purchases",
-                "get_sec_filings",
-                "get_sustainability",
-                "get_mutualfund_holders",
+                "get_stock_splits", "get_capital_gains", "get_insider_purchases",
+                "get_sec_filings", "get_sustainability", "get_mutualfund_holders"
             ]
 
             if tool_name in optional_data_tools:
@@ -2841,11 +3407,7 @@ class Tools:
                 return True, "Dividend data found"
             if "P/E" in response or "Market Cap:" in response:
                 return True, "Metrics found"
-            if (
-                "Institutional" in response
-                or "Insider" in response
-                or "Mutual Fund" in response
-            ):
+            if "Institutional" in response or "Insider" in response or "Mutual Fund" in response:
                 return True, "Holder data found"
             if "News" in response or "article" in response:
                 return True, "News data found"
@@ -2973,14 +3535,14 @@ class Tools:
             category_results[category] = {
                 "pass": category_pass,
                 "fail": category_fail,
-                "total": len(tools),
+                "total": len(tools)
             }
             result += f"  📊 Category: {category_pass}/{len(tools)} passed\n\n"
 
         # Overall summary
-        result += "=" * 60 + "\n"
+        result += "="*60 + "\n"
         result += "**📊 OVERALL SUMMARY**\n"
-        result += "=" * 60 + "\n\n"
+        result += "="*60 + "\n\n"
 
         total_tests = len(test_results)
         total_pass = sum(1 for v in test_results.values() if v)
@@ -2995,13 +3557,11 @@ class Tools:
         # Category breakdown
         result += "**Category Breakdown:**\n"
         for category, stats in category_results.items():
-            pct = (stats["pass"] / stats["total"] * 100) if stats["total"] > 0 else 0
+            pct = (stats['pass'] / stats['total'] * 100) if stats['total'] > 0 else 0
             emoji = "✅" if pct == 100 else "⚠️" if pct >= 50 else "❌"
-            result += (
-                f"  {emoji} {category}: {stats['pass']}/{stats['total']} ({pct:.0f}%)\n"
-            )
+            result += f"  {emoji} {category}: {stats['pass']}/{stats['total']} ({pct:.0f}%)\n"
 
-        result += "\n" + "=" * 60 + "\n\n"
+        result += "\n" + "="*60 + "\n\n"
 
         if total_fail == 0:
             result += "🎉 **ALL TESTS PASSED!** yfinance-ai is fully operational.\n"
@@ -3017,15 +3577,13 @@ class Tools:
         result += "\n📚 For details on any tool, ask: 'How do I use [tool_name]?'\n"
 
         if __event_emitter__:
-            await __event_emitter__(
-                {
-                    "type": "status",
-                    "data": {
-                        "description": f"✅ Self-test complete: {success_rate:.0f}% success rate",
-                        "done": True,
-                    },
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Self-test complete: {success_rate:.0f}% success rate",
+                    "done": True
                 }
-            )
+            })
 
         return result
 
