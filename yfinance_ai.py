@@ -4,9 +4,9 @@ description: Natural Language Financial Data - Fetch real-time stock prices, his
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lucas0
-version: 2.0.0
+version: 2.0.1
 license: MIT
-requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.0
+requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.1
 repository: https://github.com/lucas0/yfinance-ai
 
 OPENWEBUI INSTALLATION:
@@ -188,10 +188,17 @@ def format_percentage(value: Union[float, None], decimals: int = 2) -> str:
     if value is None or not isinstance(value, (int, float)):
         return "N/A"
 
-    # Handle values already in percentage form (>1)
+    # yfinance returns dividend yield as decimal: 0.0038 for 0.38%
+    # But sometimes returns already-scaled: 0.38 for 0.38% (not 38%)
+    # Safe rule: if value >= 0.01, it's likely already scaled, don't multiply
     if abs(value) > 1:
+        # Already in percentage form (38 = 38%)
+        return f"{value:.{decimals}f}%"
+    elif abs(value) >= 0.01:
+        # Already decimal percentage (0.38 = 0.38%, not 38%)
         return f"{value:.{decimals}f}%"
     else:
+        # Tiny decimal that needs multiplying (0.0038 -> 0.38%)
         return f"{value*100:.{decimals}f}%"
 
 
@@ -283,7 +290,7 @@ class Tools:
         self.valves = self.Valves()
         self._call_count = 0
         self._window_start = time.time()
-        logger.info("yfinance-ai v2.0.0 initialized - 50+ financial tools ready")
+        logger.info("yfinance-ai v2.0.1 initialized - 50+ financial tools ready")
 
     def _check_rate_limit(self) -> bool:
         """Simple rate limiting check"""
@@ -1245,14 +1252,14 @@ class Tools:
         __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
-        Get dividend payment history and yield information.
+        Get dividend payment history and current metrics.
 
         Args:
             ticker: Stock ticker symbol
             period: Time period for dividend history (1y, 5y, 10y, max)
 
         Returns:
-            Dividend history, yield, payout ratio, and recent payments
+            Dividend history and current dividend metrics
         """
         if not self._check_rate_limit():
             return "⚠️ Rate limit exceeded."
@@ -1270,54 +1277,39 @@ class Tools:
         info = stock.info
         dividends = stock.dividends
 
-        if dividends.empty:
-            return f"ℹ️ {ticker} does not pay dividends or no dividend data available"
-
         # Filter by period
-        if period != "max":
+        filtered_dividends = dividends.copy() if not dividends.empty else dividends
+        if period != "max" and not filtered_dividends.empty:
             years = int(period[:-1]) if period[:-1].isdigit() else 1
-            cutoff_date = datetime.now() - timedelta(days=years * 365)
+            cutoff_date = pd.Timestamp.now(tz='UTC') - pd.DateOffset(years=years)
+            div_index = filtered_dividends.index
+            if div_index.tz is None:
+                div_index = pd.to_datetime(div_index, utc=True)
+            else:
+                div_index = div_index.tz_convert('UTC')
+            filtered_dividends = filtered_dividends[div_index >= cutoff_date]
 
-            # Handle timezone-aware dates
-            if hasattr(dividends.index, "tz") and dividends.index.tz is not None:
-                import pytz
-                cutoff_date = pytz.utc.localize(cutoff_date)
-                if dividends.index.tz != pytz.utc:
-                    cutoff_date = cutoff_date.astimezone(dividends.index.tz)
-
-            dividends = dividends[dividends.index >= cutoff_date]
-
-        result = f"**💎 Dividend Information: {ticker}**\n\n"
+        result = f"**💎 Dividend History: {ticker}**\n\n"
 
         # Current dividend metrics
-        div_yield = info.get("dividendYield")
+        div_yield = info.get('dividendYield')
         result += f"**Current Yield:** {format_percentage(div_yield)}\n"
         result += f"**Annual Rate:** ${safe_get(info, 'dividendRate')}\n"
+        result += f"**Payout Ratio:** {format_percentage(info.get('payoutRatio'))}\n"
+        result += f"**Ex-Dividend Date:** {format_date(info.get('exDividendDate'))}\n\n"
 
-        payout_ratio = info.get("payoutRatio")
-        result += f"**Payout Ratio:** {format_percentage(payout_ratio)}\n"
-
-        # Ex-dividend date
-        ex_div_date = info.get("exDividendDate")
-        result += f"**Ex-Dividend Date:** {format_date(ex_div_date)}\n\n"
-
-        # Recent payments
-        result += f"**📅 Recent Dividend Payments (Last {min(10, len(dividends))}):**\n"
-        for date, amount in dividends.tail(10).items():
-            try:
-                date_str = date.strftime("%Y-%m-%d")
-            except:
-                date_str = str(date)[:10]
-            result += f"  {date_str}: ${amount:.4f}\n"
-
-        # Summary statistics
-        total_paid = dividends.sum()
-        result += f"\n**Total Paid ({period}):** ${total_paid:.2f}\n"
-
-        if len(dividends) > 1:
-            avg_div = dividends.mean()
-            result += f"**Average Dividend:** ${avg_div:.4f}\n"
-
+        # Historical dividend payments
+        if not filtered_dividends.empty:
+            result += f"**Recent Payments:**\n"
+            for date, amount in filtered_dividends.tail(10).items():
+                try:
+                    date_str = date.strftime("%Y-%m-%d")
+                except:
+                    date_str = str(date)[:10]
+                result += f"  {date_str}: ${amount:.4f}\n"
+            result += f"\n**Total ({period}):** ${filtered_dividends.sum():.2f}\n"
+        else:
+            result += f"No dividend data found\n"
 
         if __event_emitter__:
             await __event_emitter__({
@@ -3259,7 +3251,7 @@ class Tools:
             Current API usage statistics and configuration
         """
         result = "**⚙️ yfinance-ai API Status**\n\n"
-        result += f"**Version:** 2.0.0\n"
+        result += f"**Version:** 2.0.1\n"
         result += f"**yfinance Library:** {yf.__version__}\n\n"
 
         result += "**Rate Limiting:**\n"
@@ -3316,7 +3308,7 @@ class Tools:
         result = "**🧪 yfinance-ai Self-Test Report**\n\n"
         result += f"**Test Ticker:** {ticker} (S&P 500 ETF - chosen for comprehensive data coverage)\n"
         result += f"**Test Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        result += f"**Version:** 2.0.0\n\n"
+        result += f"**Version:** 2.0.1\n\n"
         result += "="*60 + "\n\n"
 
         test_results = {}
@@ -3589,5 +3581,5 @@ class Tools:
 
 
 # ============================================================
-# END OF yfinance-ai v2.0.0
+# END OF yfinance-ai v2.0.1
 # ============================================================
