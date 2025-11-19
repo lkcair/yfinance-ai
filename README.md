@@ -6,11 +6,11 @@
 
 **Author**: lucas0
 **Author URL**: https://lucas0.com
-**Funding**: https://github.com/sponsors/lucas0
+**Funding**: [Github](https://github.com/lkcair)
 **Version**: 2.0.0
 **License**: MIT
 **Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0
-**Repository**: https://github.com/lucas0/yfinance-ai
+**Repository**: https://github.com/lkcair/yfinance-ai
 **OpenWebUI Page**. Download yfinance on the OpenWebUI Website: https://openwebui.com/t/lkcair/yfinance_ai_tool
 
 ---
@@ -284,7 +284,7 @@ MIT License - Free to use, modify, and distribute
 ---
 
 **⭐ Star the repo if you find it useful!**
-
+[Repo on Github](https://github.com/lkcair/yfinance-ai)
 ---
 
 *Version: 2.0.0*
