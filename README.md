@@ -7,7 +7,7 @@
 **Author**: lucas0
 **Author URL**: https://lucas0.com
 **Funding**: [Github](https://github.com/lkcair)
-**Version**: 3.0.0
+**Version**: 3.0.1
 **License**: MIT
 **Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0, requests>=2.28.0
 **Repository**: https://github.com/lkcair/yfinance-ai
