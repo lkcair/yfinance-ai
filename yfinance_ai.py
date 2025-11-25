@@ -1,12 +1,12 @@
 """
-title: yfinance-ai - World's First AI-Powered Yahoo Finance Integration
-description: Natural Language Financial Data - Fetch real-time stock prices, historical data, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 50+ financial tools for seamless integration with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+title: yfinance-ai - World's Best AI-Powered Yahoo Finance Integration
+description: Complete Financial Data Suite - 55+ tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, Claude, ChatGPT, and any AI assistant.
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lucas0
-version: 2.0.1
+version: 3.0.0
 license: MIT
-requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.1
+requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lucas0/yfinance-ai
 
 OPENWEBUI INSTALLATION:
@@ -15,7 +15,7 @@ OPENWEBUI INSTALLATION:
 3. Click "+" to create new function
 4. Paste this code
 5. Save and enable
-6. Start asking questions like "What's Apple's stock price?" or "Compare AAPL vs MSFT"
+6. Start asking questions like "What's Apple's stock price?" or "Get Bitcoin price"
 
 INTEGRATION WITH OTHER AI TOOLS:
 - Claude Desktop: Add as MCP server
@@ -25,39 +25,49 @@ INTEGRATION WITH OTHER AI TOOLS:
 - API: Deploy as FastAPI/Flask endpoint
 
 FEATURES:
-✅ 50+ financial data tools covering every yfinance capability
-✅ Real-time stock prices and quotes
+✅ 55+ financial data tools - the most comprehensive yfinance integration
+✅ Multi-asset support: Stocks, Crypto, Forex, Commodities, ETFs
+✅ Real-time stock prices and detailed quotes
 ✅ Historical data with customizable periods/intervals
 ✅ Financial statements (income, balance sheet, cash flow)
 ✅ Key ratios and valuation metrics
 ✅ Dividends, splits, and corporate actions
-✅ Analyst recommendations and price targets
+✅ Analyst recommendations, price targets, upgrades/downgrades
+✅ EPS trends, revisions, and earnings calendar
 ✅ Institutional and insider holdings
 ✅ Options chains and derivatives data
-✅ Company news and SEC filings
+✅ Company news and SEC filings (with robust fallbacks)
 ✅ Market indices and sector performance
 ✅ ESG/Sustainability scores
+✅ ETF/Fund data: holdings, sector weights, expense ratios
 ✅ Bulk operations and stock comparison
-✅ Built-in testing function for validation
-✅ Comprehensive error handling
+✅ Peer comparison and financial summaries
+✅ Built-in self-testing for validation
+✅ Retry logic with exponential backoff
 ✅ Rate limiting protection
 ✅ Natural language query support
 
 EXAMPLE PROMPTS FOR AI:
 - "What's the current price of Apple stock?"
+- "Get Bitcoin price" or "Show me ETH-USD"
+- "What's the EUR/USD exchange rate?"
 - "Show me Tesla's income statement"
 - "Compare valuations of AAPL, MSFT, and GOOGL"
 - "Get dividend history for Coca-Cola"
 - "What are analysts saying about NVIDIA?"
+- "Show analyst price targets for TSLA"
+- "Get upgrades and downgrades for AAPL"
 - "Show insider transactions for Amazon"
 - "Get options chain for SPY"
-- "What's the latest news on Bitcoin?"
+- "What's the latest news on Apple?"
+- "Show me VOO's top holdings"
 - "Compare tech sector vs healthcare sector"
 - "Show me the major market indices"
+- "Is the stock market open?"
 
 TESTING:
 AI can self-test by asking: "Run self-test on yfinance tools"
-This will test all 50 functions and report results.
+This will test all 55+ functions and report results.
 """
 
 from typing import Callable, Any, Optional, List, Dict, Union
@@ -67,6 +77,7 @@ from dateutil import parser as dateutil_parser
 from functools import wraps
 import yfinance as yf
 import pandas as pd
+import requests
 import logging
 import re
 import time
@@ -77,6 +88,9 @@ import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Note: yfinance 0.2.66+ handles sessions internally with curl_cffi
+# Do not pass custom requests.Session - it will cause errors
 
 # Valid period values for historical data
 VALID_PERIODS = ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
@@ -99,6 +113,87 @@ MARKET_INDICES = {
 # API rate limiting
 RATE_LIMIT_CALLS = 100  # calls per window
 RATE_LIMIT_WINDOW = 60  # seconds
+
+# Commodity name to ticker mappings
+COMMODITY_TICKERS = {
+    "gold": "GC=F",
+    "silver": "SI=F",
+    "platinum": "PL=F",
+    "palladium": "PA=F",
+    "copper": "HG=F",
+    "crude oil": "CL=F",
+    "oil": "CL=F",
+    "wti": "CL=F",
+    "brent": "BZ=F",
+    "natural gas": "NG=F",
+    "nat gas": "NG=F",
+    "gasoline": "RB=F",
+    "heating oil": "HO=F",
+    "corn": "ZC=F",
+    "wheat": "ZW=F",
+    "soybeans": "ZS=F",
+    "coffee": "KC=F",
+    "sugar": "SB=F",
+    "cotton": "CT=F",
+    "cocoa": "CC=F",
+    "lumber": "LBS=F",
+    "live cattle": "LE=F",
+    "lean hogs": "HE=F",
+}
+
+# Popular cryptocurrencies
+CRYPTO_TICKERS = {
+    "bitcoin": "BTC-USD",
+    "btc": "BTC-USD",
+    "ethereum": "ETH-USD",
+    "eth": "ETH-USD",
+    "dogecoin": "DOGE-USD",
+    "doge": "DOGE-USD",
+    "solana": "SOL-USD",
+    "sol": "SOL-USD",
+    "cardano": "ADA-USD",
+    "ada": "ADA-USD",
+    "xrp": "XRP-USD",
+    "ripple": "XRP-USD",
+    "polkadot": "DOT-USD",
+    "dot": "DOT-USD",
+    "avalanche": "AVAX-USD",
+    "avax": "AVAX-USD",
+    "chainlink": "LINK-USD",
+    "link": "LINK-USD",
+    "litecoin": "LTC-USD",
+    "ltc": "LTC-USD",
+    "shiba": "SHIB-USD",
+    "shib": "SHIB-USD",
+    "polygon": "MATIC-USD",
+    "matic": "MATIC-USD",
+    "uniswap": "UNI-USD",
+    "uni": "UNI-USD",
+}
+
+# Popular forex pairs
+FOREX_PAIRS = {
+    "eurusd": "EURUSD=X",
+    "eur/usd": "EURUSD=X",
+    "gbpusd": "GBPUSD=X",
+    "gbp/usd": "GBPUSD=X",
+    "usdjpy": "USDJPY=X",
+    "usd/jpy": "USDJPY=X",
+    "usdchf": "USDCHF=X",
+    "usd/chf": "USDCHF=X",
+    "audusd": "AUDUSD=X",
+    "aud/usd": "AUDUSD=X",
+    "usdcad": "USDCAD=X",
+    "usd/cad": "USDCAD=X",
+    "nzdusd": "NZDUSD=X",
+    "nzd/usd": "NZDUSD=X",
+    "eurgbp": "EURGBP=X",
+    "eur/gbp": "EURGBP=X",
+    "eurjpy": "EURJPY=X",
+    "eur/jpy": "EURJPY=X",
+    "gbpjpy": "GBPJPY=X",
+    "gbp/jpy": "GBPJPY=X",
+}
 
 
 # ============================================================
@@ -139,8 +234,47 @@ class PeriodValidator(BaseModel):
 # UTILITY DECORATORS & HELPERS
 # ============================================================
 
+def retry_with_backoff(max_retries: int = 3, base_wait: float = 1.0, max_wait: float = 10.0):
+    """
+    Decorator for retrying functions with exponential backoff.
+
+    Args:
+        max_retries: Maximum number of retry attempts
+        base_wait: Initial wait time in seconds
+        max_wait: Maximum wait time between retries
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except (requests.exceptions.RequestException,
+                        requests.exceptions.Timeout,
+                        ConnectionError) as e:
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        wait_time = min(base_wait * (2 ** attempt), max_wait)
+                        logger.warning(f"Retry {attempt + 1}/{max_retries} for {func.__name__} after {wait_time}s: {e}")
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(f"Failed after {max_retries} attempts: {func.__name__}")
+                except Exception as e:
+                    # Don't retry on non-network errors
+                    raise
+            raise last_exception
+        return wrapper
+    return decorator
+
+
+def get_ticker_with_session(symbol: str):
+    """Create a yfinance Ticker - yfinance handles sessions internally"""
+    return yf.Ticker(symbol)
+
+
 def safe_ticker_call(func):
-    """Decorator for safe yfinance API calls with error handling"""
+    """Decorator for safe yfinance API calls with error handling and retry logic"""
     @wraps(func)
     async def wrapper(self, ticker: str, *args, **kwargs):
         try:
@@ -148,8 +282,30 @@ def safe_ticker_call(func):
             validated = TickerValidator(ticker=ticker)
             ticker_clean = validated.ticker
 
-            # Call the original function
-            return await func(self, ticker_clean, *args, **kwargs)
+            # Call the original function with retry logic for transient failures
+            max_retries = 3
+            last_error = None
+
+            for attempt in range(max_retries):
+                try:
+                    return await func(self, ticker_clean, *args, **kwargs)
+                except (requests.exceptions.RequestException,
+                        requests.exceptions.Timeout,
+                        ConnectionError) as e:
+                    last_error = e
+                    if attempt < max_retries - 1:
+                        wait_time = min(1.0 * (2 ** attempt), 10.0)
+                        logger.warning(f"Network error for {ticker_clean}, retry {attempt + 1}/{max_retries} in {wait_time}s")
+                        time.sleep(wait_time)
+                    continue
+                except Exception as e:
+                    # Non-network errors should not be retried
+                    raise
+
+            # If we exhausted retries
+            if last_error:
+                logger.error(f"Failed after {max_retries} retries for {ticker_clean}: {last_error}")
+                return f"❌ Network error for {ticker_clean}. Please try again."
 
         except ValueError as e:
             logger.error(f"Validation error in {func.__name__}: {e}")
@@ -290,7 +446,7 @@ class Tools:
         self.valves = self.Valves()
         self._call_count = 0
         self._window_start = time.time()
-        logger.info("yfinance-ai v2.0.1 initialized - 50+ financial tools ready")
+        logger.info("yfinance-ai v3.0.0 initialized - 55+ financial tools ready")
 
     def _check_rate_limit(self) -> bool:
         """Simple rate limiting check"""
@@ -1931,6 +2087,470 @@ class Tools:
             })
         return result
 
+    @safe_ticker_call
+    async def get_analyst_price_targets(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get detailed analyst price targets for a stock.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            Comprehensive price target data including current, low, mean, median, high targets
+            and the number of analysts covering the stock
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🎯 Retrieving price targets for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        result = f"**🎯 Analyst Price Targets: {ticker}**\n\n"
+
+        # Current price for comparison
+        current_price = (
+            info.get("currentPrice") or
+            info.get("regularMarketPrice") or
+            info.get("previousClose")
+        )
+
+        if current_price:
+            result += f"**📈 Current Price:** ${current_price:.2f}\n\n"
+
+        # Price targets
+        target_low = info.get("targetLowPrice")
+        target_mean = info.get("targetMeanPrice")
+        target_median = info.get("targetMedianPrice")
+        target_high = info.get("targetHighPrice")
+        num_analysts = info.get("numberOfAnalystOpinions")
+
+        if not any([target_low, target_mean, target_median, target_high]):
+            return f"ℹ️ No analyst price target data available for {ticker}"
+
+        result += "**💰 Price Targets:**\n"
+        if target_low:
+            result += f"  🔻 Low Target: ${target_low:.2f}"
+            if current_price:
+                pct = ((target_low - current_price) / current_price) * 100
+                result += f" ({pct:+.1f}%)"
+            result += "\n"
+
+        if target_mean:
+            result += f"  📊 Mean Target: ${target_mean:.2f}"
+            if current_price:
+                pct = ((target_mean - current_price) / current_price) * 100
+                result += f" ({pct:+.1f}%)"
+            result += "\n"
+
+        if target_median:
+            result += f"  📐 Median Target: ${target_median:.2f}"
+            if current_price:
+                pct = ((target_median - current_price) / current_price) * 100
+                result += f" ({pct:+.1f}%)"
+            result += "\n"
+
+        if target_high:
+            result += f"  🔺 High Target: ${target_high:.2f}"
+            if current_price:
+                pct = ((target_high - current_price) / current_price) * 100
+                result += f" ({pct:+.1f}%)"
+            result += "\n"
+
+        if num_analysts:
+            result += f"\n**👥 Number of Analysts:** {num_analysts}\n"
+
+        # Recommendation summary
+        rec_key = info.get("recommendationKey")
+        rec_mean = info.get("recommendationMean")
+        if rec_key:
+            result += f"\n**📊 Consensus Rating:** {rec_key.upper()}"
+            if rec_mean:
+                result += f" ({rec_mean:.2f}/5)"
+            result += "\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved price targets for {ticker}",
+                    "done": True
+                }
+            })
+        return result
+
+    @safe_ticker_call
+    async def get_upgrades_downgrades(
+        self,
+        ticker: str,
+        limit: int = 20,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get detailed analyst upgrades and downgrades history.
+
+        Args:
+            ticker: Stock ticker symbol
+            limit: Maximum number of rating changes to return (default 20)
+
+        Returns:
+            Recent analyst rating changes including firm, action, and grade changes
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔄 Retrieving upgrades/downgrades for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+
+        try:
+            upgrades = stock.upgrades_downgrades
+
+            if upgrades is None or upgrades.empty:
+                return f"ℹ️ No upgrades/downgrades data available for {ticker}"
+
+            result = f"**🔄 Analyst Upgrades & Downgrades: {ticker}**\n\n"
+            result += f"**Total Records:** {len(upgrades)} (showing latest {min(limit, len(upgrades))})\n\n"
+
+            # Get the latest entries
+            recent = upgrades.tail(limit).iloc[::-1]  # Reverse to show most recent first
+
+            for idx, (date, row) in enumerate(recent.iterrows()):
+                firm = row.get("Firm", "N/A")
+                to_grade = row.get("ToGrade", "N/A")
+                from_grade = row.get("FromGrade", "")
+                action = row.get("Action", "N/A")
+
+                date_str = format_date(date)
+
+                # Action emoji
+                if action and "up" in action.lower():
+                    emoji = "⬆️"
+                elif action and "down" in action.lower():
+                    emoji = "⬇️"
+                elif action and "init" in action.lower():
+                    emoji = "🆕"
+                elif action and "reit" in action.lower():
+                    emoji = "🔄"
+                else:
+                    emoji = "📊"
+
+                result += f"**{idx + 1}. {date_str}** | {firm}\n"
+                result += f"   {emoji} {action}"
+                if from_grade and to_grade:
+                    result += f": {from_grade} → {to_grade}"
+                elif to_grade:
+                    result += f": {to_grade}"
+                result += "\n\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved {len(recent)} rating changes for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.warning(f"Error fetching upgrades/downgrades for {ticker}: {e}")
+            return f"ℹ️ Unable to fetch upgrades/downgrades for {ticker}. Data may not be available."
+
+    @safe_ticker_call
+    async def get_eps_trend(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get EPS (Earnings Per Share) trend data showing how estimates have changed.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            EPS trend data showing estimate changes over different time periods
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📈 Retrieving EPS trend for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+
+        try:
+            eps_trend = stock.eps_trend
+
+            if eps_trend is None or (hasattr(eps_trend, 'empty') and eps_trend.empty):
+                return f"ℹ️ No EPS trend data available for {ticker}"
+
+            result = f"**📈 EPS Trend: {ticker}**\n\n"
+
+            if isinstance(eps_trend, pd.DataFrame):
+                result += "**Estimate Changes Over Time:**\n\n"
+
+                for col in eps_trend.columns:
+                    result += f"**{col}:**\n"
+                    for idx, value in eps_trend[col].items():
+                        if pd.notna(value):
+                            if isinstance(value, (int, float)):
+                                result += f"  {idx}: {value:.4f}\n"
+                            else:
+                                result += f"  {idx}: {value}\n"
+                    result += "\n"
+            elif isinstance(eps_trend, dict):
+                for period, data in eps_trend.items():
+                    result += f"**{period}:**\n"
+                    if isinstance(data, dict):
+                        for key, value in data.items():
+                            if value is not None:
+                                result += f"  {key}: {value}\n"
+                    else:
+                        result += f"  {data}\n"
+                    result += "\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved EPS trend for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.warning(f"Error fetching EPS trend for {ticker}: {e}")
+            return f"ℹ️ Unable to fetch EPS trend for {ticker}. Data may not be available."
+
+    @safe_ticker_call
+    async def get_eps_revisions(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get EPS revision data showing analyst estimate changes.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            EPS revisions showing up/down estimate changes by analysts
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving EPS revisions for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+
+        try:
+            eps_revisions = stock.eps_revisions
+
+            if eps_revisions is None or (hasattr(eps_revisions, 'empty') and eps_revisions.empty):
+                return f"ℹ️ No EPS revision data available for {ticker}"
+
+            result = f"**📊 EPS Revisions: {ticker}**\n\n"
+
+            if isinstance(eps_revisions, pd.DataFrame):
+                result += "**Analyst Estimate Revisions:**\n\n"
+
+                for col in eps_revisions.columns:
+                    result += f"**{col}:**\n"
+                    for idx, value in eps_revisions[col].items():
+                        if pd.notna(value):
+                            # Format based on type
+                            if "up" in str(idx).lower():
+                                emoji = "⬆️"
+                            elif "down" in str(idx).lower():
+                                emoji = "⬇️"
+                            else:
+                                emoji = "📊"
+
+                            if isinstance(value, (int, float)):
+                                result += f"  {emoji} {idx}: {value:.0f}\n"
+                            else:
+                                result += f"  {emoji} {idx}: {value}\n"
+                    result += "\n"
+            elif isinstance(eps_revisions, dict):
+                for period, data in eps_revisions.items():
+                    result += f"**{period}:**\n"
+                    if isinstance(data, dict):
+                        for key, value in data.items():
+                            if value is not None:
+                                emoji = "⬆️" if "up" in str(key).lower() else "⬇️" if "down" in str(key).lower() else "📊"
+                                result += f"  {emoji} {key}: {value}\n"
+                    result += "\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved EPS revisions for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.warning(f"Error fetching EPS revisions for {ticker}: {e}")
+            return f"ℹ️ Unable to fetch EPS revisions for {ticker}. Data may not be available."
+
+    @safe_ticker_call
+    async def get_earnings_calendar(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get earnings calendar including next earnings date and dividend dates.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            Upcoming earnings dates, ex-dividend dates, and dividend payment dates
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📅 Retrieving earnings calendar for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+
+        result = f"**📅 Earnings Calendar: {ticker}**\n\n"
+
+        try:
+            calendar = stock.calendar
+
+            if calendar is None or (isinstance(calendar, dict) and len(calendar) == 0):
+                # Fall back to info
+                info = stock.info
+                ex_div = info.get("exDividendDate")
+                div_date = info.get("dividendDate")
+
+                if ex_div or div_date:
+                    result += "**📆 Dividend Calendar:**\n"
+                    if ex_div:
+                        result += f"  Ex-Dividend Date: {format_date(ex_div)}\n"
+                    if div_date:
+                        result += f"  Dividend Date: {format_date(div_date)}\n"
+                else:
+                    return f"ℹ️ No calendar data available for {ticker}"
+
+            elif isinstance(calendar, dict):
+                # Earnings dates
+                if "Earnings Date" in calendar:
+                    earnings_dates = calendar["Earnings Date"]
+                    result += "**💰 Earnings Date:**\n"
+                    if isinstance(earnings_dates, list):
+                        for date in earnings_dates:
+                            result += f"  📅 {format_date(date)}\n"
+                    else:
+                        result += f"  📅 {format_date(earnings_dates)}\n"
+                    result += "\n"
+
+                # Ex-dividend date
+                if "Ex-Dividend Date" in calendar:
+                    result += f"**📆 Ex-Dividend Date:** {format_date(calendar['Ex-Dividend Date'])}\n"
+
+                # Dividend date
+                if "Dividend Date" in calendar:
+                    result += f"**💵 Dividend Date:** {format_date(calendar['Dividend Date'])}\n"
+
+                # Other calendar items
+                for key, value in calendar.items():
+                    if key not in ["Earnings Date", "Ex-Dividend Date", "Dividend Date"]:
+                        if value is not None:
+                            result += f"**{key}:** {value}\n"
+
+            elif isinstance(calendar, pd.DataFrame) and not calendar.empty:
+                result += "**📆 Calendar Events:**\n\n"
+                for col in calendar.columns:
+                    result += f"**{col}:**\n"
+                    for idx, value in calendar[col].items():
+                        if pd.notna(value):
+                            result += f"  {idx}: {format_date(value) if 'date' in str(idx).lower() else value}\n"
+                    result += "\n"
+
+        except Exception as e:
+            logger.warning(f"Error fetching calendar for {ticker}: {e}")
+            # Try fallback to earnings_dates
+            try:
+                earnings_dates = stock.earnings_dates
+                if earnings_dates is not None and not earnings_dates.empty:
+                    result += "**📅 Upcoming Earnings Dates:**\n"
+                    future_dates = earnings_dates[earnings_dates.index >= datetime.now()]
+                    if not future_dates.empty:
+                        for date in future_dates.head(3).index:
+                            result += f"  📅 {format_date(date)}\n"
+                    else:
+                        result += "  No upcoming earnings dates found\n"
+            except:
+                pass
+
+        # Add info-based dividend data if not already included
+        try:
+            info = stock.info
+            if "Ex-Dividend" not in result and info.get("exDividendDate"):
+                result += f"\n**📆 Ex-Dividend Date:** {format_date(info['exDividendDate'])}\n"
+            if info.get("dividendYield"):
+                result += f"**💰 Dividend Yield:** {format_percentage(info['dividendYield'])}\n"
+        except:
+            pass
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved earnings calendar for {ticker}",
+                    "done": True
+                }
+            })
+        return result
+
     # ============================================================
     # TOOL 23-28: INSTITUTIONAL & INSIDER HOLDINGS
     # ============================================================
@@ -2527,78 +3147,126 @@ class Tools:
         # Respect configured limit
         limit = min(limit, self.valves.max_news_items)
 
-        try:
-            stock = yf.Ticker(ticker)
-            news_data = stock.news
+        # Retry logic for news fetching (can be flaky)
+        news_data = None
+        last_error = None
 
-            if not news_data or len(news_data) == 0:
-                return f"ℹ️ No recent news available for {ticker}. News may not be accessible at this time."
-
-            result = f"**📰 Recent News: {ticker}**\n\n"
-            articles_displayed = 0
-
-            for article in news_data:
-                if articles_displayed >= limit:
+        for attempt in range(3):
+            try:
+                stock = yf.Ticker(ticker)
+                news_data = stock.news
+                if news_data and len(news_data) > 0:
                     break
+                # If empty, wait and retry
+                if attempt < 2:
+                    time.sleep(1)
+            except Exception as e:
+                last_error = e
+                logger.warning(f"News fetch attempt {attempt + 1} failed for {ticker}: {e}")
+                if attempt < 2:
+                    time.sleep(1)
 
+        if not news_data or len(news_data) == 0:
+            if last_error:
+                logger.warning(f"News fetch failed after retries for {ticker}: {last_error}")
+            return f"ℹ️ No recent news available for {ticker}. News may not be accessible at this time. Try searching for company name instead."
+
+        result = f"**📰 Recent News: {ticker}**\n\n"
+        articles_displayed = 0
+
+        def parse_article(article):
+            """Parse article from either old or new yfinance API structure"""
+            # New structure (v0.2.66+): nested in 'content' dict
+            content = article.get("content", article)
+
+            title = content.get("title", "") or article.get("title", "")
+
+            # Publisher from provider or top-level
+            provider = content.get("provider", {})
+            publisher = (
+                provider.get("displayName") or
+                provider.get("name") or
+                article.get("publisher") or
+                content.get("publisher") or
+                "Unknown"
+            )
+
+            # Link from canonicalUrl or clickThroughUrl or top-level
+            canonical_url = content.get("canonicalUrl", {})
+            click_url = content.get("clickThroughUrl", {})
+            link = (
+                canonical_url.get("url", "") or
+                click_url.get("url", "") or
+                article.get("link", "") or
+                content.get("link", "") or
+                article.get("url", "") or
+                ""
+            )
+
+            # Date from pubDate, displayTime, or providerPublishTime
+            pub_date = (
+                content.get("pubDate") or
+                content.get("displayTime") or
+                article.get("pubDate") or
+                article.get("providerPublishTime")
+            )
+
+            # Format date
+            date = "Unknown date"
+            if pub_date:
                 try:
-                    # Handle both old and new yfinance API structure
-                    # New structure (v0.2.66+): nested in 'content' dict
-                    content = article.get("content", article)
-
-                    title = content.get("title", "")
-
-                    # Publisher from provider or top-level
-                    provider = content.get("provider", {})
-                    publisher = provider.get("displayName", article.get("publisher", "Unknown"))
-
-                    # Link from canonicalUrl or clickThroughUrl or top-level
-                    canonical_url = content.get("canonicalUrl", {})
-                    click_url = content.get("clickThroughUrl", {})
-                    link = canonical_url.get("url", "") or click_url.get("url", "") or article.get("link", "")
-
-                    # Date from pubDate or providerPublishTime
-                    pub_date = content.get("pubDate") or content.get("displayTime")
-                    publish_time = article.get("providerPublishTime")
-
-                    # Format date
+                    if isinstance(pub_date, str):
+                        date = dateutil_parser.parse(pub_date).strftime("%Y-%m-%d %H:%M")
+                    elif isinstance(pub_date, (int, float)):
+                        date = datetime.fromtimestamp(pub_date).strftime("%Y-%m-%d %H:%M")
+                except:
                     date = "Unknown date"
-                    if pub_date:
-                        try:
-                            # Handle ISO format (2025-10-28T22:54:31Z)
-                            date = dateutil_parser.parse(pub_date).strftime("%Y-%m-%d %H:%M")
-                        except:
-                            try:
-                                # Fallback to timestamp
-                                if isinstance(pub_date, (int, float)):
-                                    date = datetime.fromtimestamp(pub_date).strftime("%Y-%m-%d %H:%M")
-                            except:
-                                date = "Unknown date"
-                    elif publish_time:
-                        try:
-                            date = datetime.fromtimestamp(publish_time).strftime("%Y-%m-%d %H:%M")
-                        except:
-                            date = "Unknown date"
 
-                    # Only show articles with valid titles
-                    if title and title.strip():
-                        articles_displayed += 1
-                        result += f"**{articles_displayed}. {title}**\n"
-                        result += f"   📰 {publisher} | 📅 {date}\n"
-                        if link:
-                            result += f"   🔗 {link}\n"
-                        result += "\n"
-                except Exception as article_error:
-                    logger.debug(f"Skipping news article due to format issue: {article_error}")
-                    continue
+            # Summary/description if available
+            summary = content.get("summary", "") or article.get("summary", "")
 
-            if articles_displayed == 0:
-                return f"ℹ️ News articles found for {ticker} but none had valid titles. Try again later."
+            return {
+                "title": title.strip() if title else "",
+                "publisher": publisher,
+                "link": link,
+                "date": date,
+                "summary": summary[:200] if summary else ""
+            }
 
-            return result
-        except Exception as e:
-            logger.warning(f"Error fetching news for {ticker}: {e}")
-            return f"ℹ️ Unable to fetch news for {ticker} at this time. This can happen temporarily due to API limitations."
+        for article in news_data:
+            if articles_displayed >= limit:
+                break
+
+            try:
+                parsed = parse_article(article)
+
+                # Only show articles with valid titles
+                if parsed["title"]:
+                    articles_displayed += 1
+                    result += f"**{articles_displayed}. {parsed['title']}**\n"
+                    result += f"   📰 {parsed['publisher']} | 📅 {parsed['date']}\n"
+                    if parsed["summary"]:
+                        result += f"   _{parsed['summary']}..._\n"
+                    if parsed["link"]:
+                        result += f"   🔗 {parsed['link']}\n"
+                    result += "\n"
+            except Exception as article_error:
+                logger.debug(f"Skipping news article due to format issue: {article_error}")
+                continue
+
+        if articles_displayed == 0:
+            return f"ℹ️ News articles found for {ticker} but none had valid content. Yahoo Finance news format may have changed. Try again later."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved {articles_displayed} news articles for {ticker}",
+                    "done": True
+                }
+            })
+
+        return result
 
     @safe_ticker_call
     async def get_sec_filings(
@@ -2993,7 +3661,656 @@ class Tools:
             return f"ℹ️ ESG/Sustainability data not available for {ticker}. This data is limited to select large-cap companies."
 
     # ============================================================
-    # TOOL 37-39: BULK OPERATIONS & SCREENING
+    # TOOL 37-39: FUND/ETF DATA
+    # ============================================================
+
+    @safe_ticker_call
+    async def get_fund_overview(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get overview data for an ETF or mutual fund.
+
+        Args:
+            ticker: Fund ticker symbol (e.g., 'VOO', 'SPY', 'QQQ', 'ARKK')
+
+        Returns:
+            Fund category, family, total assets, expense ratio, and other key metrics
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving fund overview for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        # Check if this is a fund
+        quote_type = info.get("quoteType", "").upper()
+        if quote_type not in ["ETF", "MUTUALFUND"]:
+            return f"ℹ️ {ticker} does not appear to be an ETF or mutual fund. Use get_company_info for stocks."
+
+        result = f"**📊 Fund Overview: {ticker}**\n\n"
+
+        # Basic info
+        result += f"**📛 Name:** {safe_get(info, 'longName')}\n"
+        result += f"**📁 Category:** {safe_get(info, 'category')}\n"
+        result += f"**🏢 Fund Family:** {safe_get(info, 'fundFamily')}\n"
+        result += f"**📈 Quote Type:** {quote_type}\n\n"
+
+        # Key metrics
+        result += "**💰 Key Metrics:**\n"
+
+        total_assets = info.get("totalAssets")
+        if total_assets:
+            result += f"  Total Assets: {format_large_number(total_assets)}\n"
+
+        expense_ratio = info.get("annualReportExpenseRatio") or info.get("expenseRatio")
+        if expense_ratio:
+            result += f"  Expense Ratio: {expense_ratio*100:.2f}%\n"
+
+        nav = info.get("navPrice")
+        if nav:
+            result += f"  NAV: ${nav:.2f}\n"
+
+        yield_val = info.get("yield") or info.get("trailingAnnualDividendYield")
+        if yield_val:
+            result += f"  Yield: {format_percentage(yield_val)}\n"
+
+        ytd_return = info.get("ytdReturn")
+        if ytd_return:
+            result += f"  YTD Return: {format_percentage(ytd_return)}\n"
+
+        three_year_return = info.get("threeYearAverageReturn")
+        if three_year_return:
+            result += f"  3-Year Avg Return: {format_percentage(three_year_return)}\n"
+
+        five_year_return = info.get("fiveYearAverageReturn")
+        if five_year_return:
+            result += f"  5-Year Avg Return: {format_percentage(five_year_return)}\n"
+
+        # Beta
+        beta = info.get("beta3Year")
+        if beta:
+            result += f"  Beta (3Y): {beta:.2f}\n"
+
+        result += "\n"
+
+        # Price info
+        current_price = info.get("regularMarketPrice") or info.get("previousClose")
+        if current_price:
+            result += f"**💵 Current Price:** ${current_price:.2f}\n"
+
+        day_low = info.get("dayLow")
+        day_high = info.get("dayHigh")
+        if day_low and day_high:
+            result += f"**📊 Day Range:** ${day_low:.2f} - ${day_high:.2f}\n"
+
+        week_low = info.get("fiftyTwoWeekLow")
+        week_high = info.get("fiftyTwoWeekHigh")
+        if week_low and week_high:
+            result += f"**📉 52-Week Range:** ${week_low:.2f} - ${week_high:.2f}\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Retrieved fund overview for {ticker}",
+                    "done": True
+                }
+            })
+        return result
+
+    @safe_ticker_call
+    async def get_fund_holdings(
+        self,
+        ticker: str,
+        limit: int = 25,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get top holdings for an ETF or mutual fund.
+
+        Args:
+            ticker: Fund ticker symbol (e.g., 'VOO', 'SPY', 'QQQ')
+            limit: Maximum number of holdings to return (default 25)
+
+        Returns:
+            List of top holdings with weights and values
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📋 Retrieving fund holdings for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+
+        try:
+            # Try to get fund holdings
+            holdings = None
+
+            # Method 1: Try funds_data
+            try:
+                funds_data = stock.funds_data
+                if funds_data and hasattr(funds_data, 'top_holdings'):
+                    holdings = funds_data.top_holdings
+            except:
+                pass
+
+            # Method 2: Try direct holdings attribute
+            if holdings is None or (hasattr(holdings, 'empty') and holdings.empty):
+                try:
+                    holdings = stock.major_holders
+                except:
+                    pass
+
+            if holdings is None or (hasattr(holdings, 'empty') and holdings.empty):
+                # Check if it's even a fund
+                info = stock.info
+                quote_type = info.get("quoteType", "").upper()
+                if quote_type not in ["ETF", "MUTUALFUND"]:
+                    return f"ℹ️ {ticker} is not an ETF or mutual fund. Holdings data is only available for funds."
+                return f"ℹ️ Holdings data for {ticker} is not available via yfinance. Try checking the fund provider's website."
+
+            result = f"**📋 Top Holdings: {ticker}**\n\n"
+
+            if isinstance(holdings, pd.DataFrame):
+                # Limit results
+                holdings = holdings.head(limit)
+
+                for idx, row in holdings.iterrows():
+                    holding_name = row.get("holdingName") or row.get("Name") or row.get("Holder") or str(idx)
+                    weight = row.get("holdingPercent") or row.get("pctHeld") or row.get("% Held")
+
+                    result += f"**{idx + 1 if isinstance(idx, int) else idx}. {holding_name}**\n"
+                    if weight:
+                        if isinstance(weight, (int, float)):
+                            result += f"   Weight: {weight*100:.2f}%\n" if weight < 1 else f"   Weight: {weight:.2f}%\n"
+                        else:
+                            result += f"   Weight: {weight}\n"
+                    result += "\n"
+
+            info = stock.info
+            result += f"\n**📊 Total Holdings:** {info.get('holdings', 'N/A')}\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved holdings for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.warning(f"Error fetching holdings for {ticker}: {e}")
+            return f"ℹ️ Unable to fetch holdings data for {ticker}. This data may not be available for all funds."
+
+    @safe_ticker_call
+    async def get_fund_sector_weights(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get sector allocation/weights for an ETF or mutual fund.
+
+        Args:
+            ticker: Fund ticker symbol (e.g., 'VOO', 'SPY', 'QQQ')
+
+        Returns:
+            Sector allocation percentages for the fund
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Retrieving sector weights for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        # Check if this is a fund
+        quote_type = info.get("quoteType", "").upper()
+        if quote_type not in ["ETF", "MUTUALFUND"]:
+            return f"ℹ️ {ticker} is not an ETF or mutual fund. Sector weights are only available for funds."
+
+        result = f"**📊 Sector Allocation: {ticker}**\n\n"
+
+        try:
+            # Try to get sector weightings
+            sector_weights = None
+
+            # Method 1: Try funds_data
+            try:
+                funds_data = stock.funds_data
+                if funds_data and hasattr(funds_data, 'sector_weightings'):
+                    sector_weights = funds_data.sector_weightings
+            except:
+                pass
+
+            if sector_weights and len(sector_weights) > 0:
+                if isinstance(sector_weights, dict):
+                    # Sort by weight descending
+                    sorted_sectors = sorted(sector_weights.items(), key=lambda x: x[1] if x[1] else 0, reverse=True)
+                    for sector, weight in sorted_sectors:
+                        if weight:
+                            bar = "█" * int(weight * 20) if weight < 1 else "█" * int(weight / 5)
+                            weight_pct = weight * 100 if weight < 1 else weight
+                            result += f"**{sector}:** {weight_pct:.1f}% {bar}\n"
+                elif isinstance(sector_weights, pd.DataFrame):
+                    for idx, row in sector_weights.iterrows():
+                        sector = idx
+                        weight = row.iloc[0] if len(row) > 0 else row
+                        if weight:
+                            weight_pct = weight * 100 if weight < 1 else weight
+                            bar = "█" * int(weight_pct / 5)
+                            result += f"**{sector}:** {weight_pct:.1f}% {bar}\n"
+
+                if __event_emitter__:
+                    await __event_emitter__({
+                        "type": "status",
+                        "data": {
+                            "description": f"✅ Retrieved sector weights for {ticker}",
+                            "done": True
+                        }
+                    })
+                return result
+
+            # Fallback: Check info for sector data
+            sector_info = info.get("sectorWeightings")
+            if sector_info:
+                for sector_data in sector_info:
+                    for sector, weight in sector_data.items():
+                        if weight:
+                            weight_pct = weight * 100 if weight < 1 else weight
+                            bar = "█" * int(weight_pct / 5)
+                            result += f"**{sector}:** {weight_pct:.1f}% {bar}\n"
+                return result
+
+            return f"ℹ️ Sector allocation data for {ticker} is not available via yfinance. Try checking the fund provider's website."
+
+        except Exception as e:
+            logger.warning(f"Error fetching sector weights for {ticker}: {e}")
+            return f"ℹ️ Unable to fetch sector weights for {ticker}. This data may not be available for all funds."
+
+    # ============================================================
+    # TOOL 40-42: CRYPTO, FOREX & COMMODITY DATA
+    # ============================================================
+
+    async def get_crypto_price(
+        self,
+        symbol: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get cryptocurrency price and market data.
+
+        Args:
+            symbol: Crypto symbol (e.g., 'BTC', 'ETH', 'bitcoin', 'ethereum', 'BTC-USD')
+
+        Returns:
+            Current price, 24h change, market cap, volume, and key metrics
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        # Normalize symbol
+        symbol_clean = symbol.strip().upper()
+
+        # Map common names to tickers
+        symbol_lower = symbol.strip().lower()
+        if symbol_lower in CRYPTO_TICKERS:
+            ticker = CRYPTO_TICKERS[symbol_lower]
+        elif "-USD" in symbol_clean or "-EUR" in symbol_clean:
+            ticker = symbol_clean
+        else:
+            # Assume USD pair
+            ticker = f"{symbol_clean}-USD"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"₿ Retrieving crypto data for {ticker}",
+                    "done": False
+                }
+            })
+
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+
+            if not info or len(info) < 3:
+                return f"❌ No data found for cryptocurrency {symbol}. Try using format like 'BTC-USD' or 'ETH-USD'."
+
+            result = f"**₿ Cryptocurrency: {ticker}**\n\n"
+
+            # Name
+            name = info.get("name") or info.get("shortName") or ticker
+            result += f"**📛 Name:** {name}\n\n"
+
+            # Current price
+            current_price = (
+                info.get("regularMarketPrice") or
+                info.get("currentPrice") or
+                info.get("previousClose")
+            )
+            if current_price:
+                result += f"**💰 Current Price:** ${current_price:,.2f}\n"
+
+            # 24h change
+            day_change = info.get("regularMarketChange")
+            day_change_pct = info.get("regularMarketChangePercent")
+            if day_change is not None and day_change_pct is not None:
+                emoji = "📈" if day_change >= 0 else "📉"
+                result += f"**{emoji} 24h Change:** ${day_change:+,.2f} ({day_change_pct:+.2f}%)\n"
+
+            # Day range
+            day_low = info.get("dayLow") or info.get("regularMarketDayLow")
+            day_high = info.get("dayHigh") or info.get("regularMarketDayHigh")
+            if day_low and day_high:
+                result += f"**📊 24h Range:** ${day_low:,.2f} - ${day_high:,.2f}\n"
+
+            # 52-week range
+            week_low = info.get("fiftyTwoWeekLow")
+            week_high = info.get("fiftyTwoWeekHigh")
+            if week_low and week_high:
+                result += f"**📉 52-Week Range:** ${week_low:,.2f} - ${week_high:,.2f}\n"
+
+            result += "\n"
+
+            # Market metrics
+            result += "**📈 Market Metrics:**\n"
+
+            market_cap = info.get("marketCap")
+            if market_cap:
+                result += f"  Market Cap: {format_large_number(market_cap)}\n"
+
+            volume = info.get("volume") or info.get("regularMarketVolume")
+            if volume:
+                result += f"  24h Volume: ${volume:,.0f}\n"
+
+            circulating = info.get("circulatingSupply")
+            if circulating:
+                result += f"  Circulating Supply: {circulating:,.0f}\n"
+
+            total_supply = info.get("maxSupply")
+            if total_supply:
+                result += f"  Max Supply: {total_supply:,.0f}\n"
+
+            # Previous close
+            prev_close = info.get("previousClose")
+            if prev_close:
+                result += f"  Previous Close: ${prev_close:,.2f}\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved crypto data for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching crypto data for {symbol}: {e}")
+            return f"❌ Error fetching data for {symbol}: {str(e)}. Make sure the symbol is valid (e.g., 'BTC-USD')."
+
+    async def get_forex_rate(
+        self,
+        pair: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get foreign exchange (forex) rate for a currency pair.
+
+        Args:
+            pair: Currency pair (e.g., 'EURUSD', 'EUR/USD', 'eurusd', 'GBPUSD=X')
+
+        Returns:
+            Current exchange rate, bid/ask, day range, and recent changes
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        # Normalize pair
+        pair_clean = pair.strip().lower().replace("/", "").replace("-", "").replace(" ", "")
+
+        # Map common formats to yfinance tickers
+        if pair_clean in FOREX_PAIRS:
+            ticker = FOREX_PAIRS[pair_clean]
+        elif pair.strip().upper().endswith("=X"):
+            ticker = pair.strip().upper()
+        else:
+            # Try to construct ticker
+            ticker = f"{pair_clean.upper()}=X"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"💱 Retrieving forex rate for {ticker}",
+                    "done": False
+                }
+            })
+
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+
+            if not info or len(info) < 3:
+                return f"❌ No data found for forex pair {pair}. Try format like 'EURUSD' or 'EUR/USD'."
+
+            result = f"**💱 Forex Rate: {ticker.replace('=X', '')}**\n\n"
+
+            # Name
+            name = info.get("shortName") or info.get("longName") or ticker
+            result += f"**📛 Pair:** {name}\n\n"
+
+            # Current rate
+            current_rate = (
+                info.get("regularMarketPrice") or
+                info.get("bid") or
+                info.get("previousClose")
+            )
+            if current_rate:
+                result += f"**💰 Current Rate:** {current_rate:.5f}\n"
+
+            # Bid/Ask
+            bid = info.get("bid")
+            ask = info.get("ask")
+            if bid and ask:
+                spread = ask - bid
+                result += f"**📊 Bid:** {bid:.5f}\n"
+                result += f"**📊 Ask:** {ask:.5f}\n"
+                result += f"**📐 Spread:** {spread:.5f} ({spread/bid*10000:.1f} pips)\n"
+
+            # Day change
+            day_change = info.get("regularMarketChange")
+            day_change_pct = info.get("regularMarketChangePercent")
+            if day_change is not None and day_change_pct is not None:
+                emoji = "📈" if day_change >= 0 else "📉"
+                result += f"**{emoji} Day Change:** {day_change:+.5f} ({day_change_pct:+.2f}%)\n"
+
+            # Day range
+            day_low = info.get("dayLow") or info.get("regularMarketDayLow")
+            day_high = info.get("dayHigh") or info.get("regularMarketDayHigh")
+            if day_low and day_high:
+                result += f"**📊 Day Range:** {day_low:.5f} - {day_high:.5f}\n"
+
+            # 52-week range
+            week_low = info.get("fiftyTwoWeekLow")
+            week_high = info.get("fiftyTwoWeekHigh")
+            if week_low and week_high:
+                result += f"**📉 52-Week Range:** {week_low:.5f} - {week_high:.5f}\n"
+
+            # Volume
+            volume = info.get("volume") or info.get("regularMarketVolume")
+            if volume:
+                result += f"**📈 Volume:** {volume:,.0f}\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved forex rate for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching forex data for {pair}: {e}")
+            return f"❌ Error fetching data for {pair}: {str(e)}. Try format like 'EURUSD' or 'EUR/USD'."
+
+    async def get_commodity_price(
+        self,
+        commodity: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get commodity/futures price data.
+
+        Args:
+            commodity: Commodity name or ticker (e.g., 'gold', 'oil', 'crude oil', 'GC=F', 'CL=F')
+
+        Returns:
+            Current price, day change, and key market data
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        # Normalize commodity name
+        commodity_clean = commodity.strip().lower()
+
+        # Map common names to tickers
+        if commodity_clean in COMMODITY_TICKERS:
+            ticker = COMMODITY_TICKERS[commodity_clean]
+        elif commodity.strip().upper().endswith("=F"):
+            ticker = commodity.strip().upper()
+        else:
+            # Check if it's already a valid futures ticker format
+            ticker = f"{commodity.strip().upper()}=F"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🛢️ Retrieving commodity data for {ticker}",
+                    "done": False
+                }
+            })
+
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+
+            if not info or len(info) < 3:
+                # Try alternative lookup
+                available = ", ".join(list(COMMODITY_TICKERS.keys())[:10])
+                return f"❌ No data found for commodity '{commodity}'. Available commodities: {available}"
+
+            result = f"**🛢️ Commodity: {ticker}**\n\n"
+
+            # Name
+            name = info.get("shortName") or info.get("longName") or ticker
+            result += f"**📛 Name:** {name}\n\n"
+
+            # Current price
+            current_price = (
+                info.get("regularMarketPrice") or
+                info.get("previousClose")
+            )
+            if current_price:
+                result += f"**💰 Current Price:** ${current_price:,.2f}\n"
+
+            # Day change
+            day_change = info.get("regularMarketChange")
+            day_change_pct = info.get("regularMarketChangePercent")
+            if day_change is not None and day_change_pct is not None:
+                emoji = "📈" if day_change >= 0 else "📉"
+                result += f"**{emoji} Day Change:** ${day_change:+,.2f} ({day_change_pct:+.2f}%)\n"
+
+            # Day range
+            day_low = info.get("dayLow") or info.get("regularMarketDayLow")
+            day_high = info.get("dayHigh") or info.get("regularMarketDayHigh")
+            if day_low and day_high:
+                result += f"**📊 Day Range:** ${day_low:,.2f} - ${day_high:,.2f}\n"
+
+            # 52-week range
+            week_low = info.get("fiftyTwoWeekLow")
+            week_high = info.get("fiftyTwoWeekHigh")
+            if week_low and week_high:
+                result += f"**📉 52-Week Range:** ${week_low:,.2f} - ${week_high:,.2f}\n"
+
+            # Open
+            market_open = info.get("open") or info.get("regularMarketOpen")
+            if market_open:
+                result += f"**📈 Open:** ${market_open:,.2f}\n"
+
+            # Previous close
+            prev_close = info.get("previousClose")
+            if prev_close:
+                result += f"**📊 Previous Close:** ${prev_close:,.2f}\n"
+
+            # Volume
+            volume = info.get("volume") or info.get("regularMarketVolume")
+            if volume:
+                result += f"**📊 Volume:** {volume:,.0f}\n"
+
+            # Contract info
+            result += "\n**📜 Contract Info:**\n"
+
+            expire_date = info.get("expireDate")
+            if expire_date:
+                result += f"  Expiration: {format_date(expire_date)}\n"
+
+            contract_size = info.get("contractSize")
+            if contract_size:
+                result += f"  Contract Size: {contract_size}\n"
+
+            if __event_emitter__:
+                await __event_emitter__({
+                    "type": "status",
+                    "data": {
+                        "description": f"✅ Retrieved commodity data for {ticker}",
+                        "done": True
+                    }
+                })
+            return result
+
+        except Exception as e:
+            logger.error(f"Error fetching commodity data for {commodity}: {e}")
+            available = ", ".join(list(COMMODITY_TICKERS.keys())[:10])
+            return f"❌ Error fetching data for '{commodity}'. Available: {available}"
+
+    # ============================================================
+    # TOOL 43-45: BULK OPERATIONS & SCREENING
     # ============================================================
 
     async def download_multiple_tickers(
@@ -3131,7 +4448,496 @@ class Tools:
         return result
 
     # ============================================================
-    # TOOL 40-42: UTILITY & HELPER METHODS
+    # TOOL 46-49: ANALYSIS & COMPARISON TOOLS
+    # ============================================================
+
+    @safe_ticker_call
+    async def get_peer_comparison(
+        self,
+        ticker: str,
+        peers: str = None,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Compare a stock with its peers on key metrics.
+
+        Args:
+            ticker: Primary stock ticker symbol
+            peers: Optional comma-separated peer tickers (if not provided, uses sector peers)
+
+        Returns:
+            Comparison table of key metrics across stocks
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Generating peer comparison for {ticker}",
+                    "done": False
+                }
+            })
+
+        # Get primary stock info
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        # Determine peers
+        peer_list = []
+        if peers:
+            peer_list = [p.strip().upper() for p in peers.replace(",", " ").split() if p.strip()]
+        else:
+            # Try to find sector peers from info
+            sector = info.get("sector")
+            industry = info.get("industry")
+
+            # Common sector peers (fallback)
+            sector_peers = {
+                "Technology": ["AAPL", "MSFT", "GOOGL", "META", "NVDA"],
+                "Financial Services": ["JPM", "BAC", "GS", "MS", "C"],
+                "Healthcare": ["JNJ", "UNH", "PFE", "ABBV", "MRK"],
+                "Consumer Cyclical": ["AMZN", "TSLA", "HD", "NKE", "MCD"],
+                "Communication Services": ["GOOGL", "META", "DIS", "NFLX", "T"],
+                "Energy": ["XOM", "CVX", "COP", "SLB", "EOG"],
+            }
+
+            if sector and sector in sector_peers:
+                peer_list = [p for p in sector_peers[sector] if p != ticker][:4]
+            else:
+                peer_list = ["SPY"]  # Default to S&P 500 comparison
+
+        result = f"**📊 Peer Comparison: {ticker}**\n\n"
+        result += f"**Sector:** {info.get('sector', 'N/A')}\n"
+        result += f"**Industry:** {info.get('industry', 'N/A')}\n\n"
+
+        # Collect data for all tickers
+        all_tickers = [ticker] + peer_list[:5]  # Limit to 6 total
+        comparison_data = []
+
+        for t in all_tickers:
+            try:
+                s = yf.Ticker(t)
+                i = s.info
+
+                comparison_data.append({
+                    "ticker": t,
+                    "name": i.get("shortName", t)[:20],
+                    "price": i.get("regularMarketPrice") or i.get("previousClose"),
+                    "market_cap": i.get("marketCap"),
+                    "pe": i.get("trailingPE"),
+                    "forward_pe": i.get("forwardPE"),
+                    "pb": i.get("priceToBook"),
+                    "div_yield": i.get("dividendYield"),
+                    "profit_margin": i.get("profitMargins"),
+                    "beta": i.get("beta"),
+                })
+            except Exception as e:
+                logger.warning(f"Could not fetch data for {t}: {e}")
+
+        if not comparison_data:
+            return f"❌ Could not fetch comparison data for {ticker}"
+
+        # Format comparison table
+        result += "**💰 Valuation Metrics:**\n"
+        result += "```\n"
+        result += f"{'Ticker':<8} {'Price':>10} {'P/E':>8} {'Fwd P/E':>8} {'P/B':>8}\n"
+        result += "-" * 50 + "\n"
+
+        for d in comparison_data:
+            price = f"${d['price']:.2f}" if d['price'] else "N/A"
+            pe = f"{d['pe']:.1f}" if d['pe'] else "N/A"
+            fpe = f"{d['forward_pe']:.1f}" if d['forward_pe'] else "N/A"
+            pb = f"{d['pb']:.1f}" if d['pb'] else "N/A"
+            result += f"{d['ticker']:<8} {price:>10} {pe:>8} {fpe:>8} {pb:>8}\n"
+
+        result += "```\n\n"
+
+        result += "**📈 Market & Risk:**\n"
+        result += "```\n"
+        result += f"{'Ticker':<8} {'Mkt Cap':>12} {'Beta':>8} {'Div Yld':>10}\n"
+        result += "-" * 50 + "\n"
+
+        for d in comparison_data:
+            mc = format_large_number(d['market_cap']) if d['market_cap'] else "N/A"
+            beta = f"{d['beta']:.2f}" if d['beta'] else "N/A"
+            div = f"{d['div_yield']*100:.1f}%" if d['div_yield'] else "N/A"
+            result += f"{d['ticker']:<8} {mc:>12} {beta:>8} {div:>10}\n"
+
+        result += "```\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Generated peer comparison for {ticker}",
+                    "done": True
+                }
+            })
+        return result
+
+    @safe_ticker_call
+    async def get_financial_summary(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get a comprehensive one-page financial summary of a stock.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            Comprehensive summary including price, valuation, financials, and analyst data
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📋 Generating financial summary for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        if not info or len(info) < 3:
+            return f"❌ No data available for {ticker}"
+
+        result = f"**📋 Financial Summary: {ticker}**\n"
+        result += f"**{info.get('longName', ticker)}**\n"
+        result += "=" * 50 + "\n\n"
+
+        # Company Overview
+        result += "**🏢 Company Overview:**\n"
+        result += f"  Sector: {info.get('sector', 'N/A')}\n"
+        result += f"  Industry: {info.get('industry', 'N/A')}\n"
+        result += f"  Employees: {info.get('fullTimeEmployees', 'N/A'):,}\n" if info.get('fullTimeEmployees') else ""
+        result += "\n"
+
+        # Price & Valuation
+        result += "**💰 Price & Valuation:**\n"
+        current_price = info.get("regularMarketPrice") or info.get("previousClose")
+        if current_price:
+            result += f"  Current Price: ${current_price:.2f}\n"
+
+        market_cap = info.get("marketCap")
+        if market_cap:
+            result += f"  Market Cap: {format_large_number(market_cap)}\n"
+
+        pe = info.get("trailingPE")
+        if pe:
+            result += f"  P/E Ratio: {pe:.1f}\n"
+
+        forward_pe = info.get("forwardPE")
+        if forward_pe:
+            result += f"  Forward P/E: {forward_pe:.1f}\n"
+
+        pb = info.get("priceToBook")
+        if pb:
+            result += f"  P/B Ratio: {pb:.1f}\n"
+
+        ev_ebitda = info.get("enterpriseToEbitda")
+        if ev_ebitda:
+            result += f"  EV/EBITDA: {ev_ebitda:.1f}\n"
+
+        result += "\n"
+
+        # Financials
+        result += "**📊 Key Financials:**\n"
+        revenue = info.get("totalRevenue")
+        if revenue:
+            result += f"  Revenue: {format_large_number(revenue)}\n"
+
+        gross_profit = info.get("grossProfits")
+        if gross_profit:
+            result += f"  Gross Profit: {format_large_number(gross_profit)}\n"
+
+        net_income = info.get("netIncomeToCommon")
+        if net_income:
+            result += f"  Net Income: {format_large_number(net_income)}\n"
+
+        profit_margin = info.get("profitMargins")
+        if profit_margin:
+            result += f"  Profit Margin: {profit_margin*100:.1f}%\n"
+
+        roe = info.get("returnOnEquity")
+        if roe:
+            result += f"  ROE: {roe*100:.1f}%\n"
+
+        debt_equity = info.get("debtToEquity")
+        if debt_equity:
+            result += f"  Debt/Equity: {debt_equity:.1f}\n"
+
+        result += "\n"
+
+        # Dividends
+        div_yield = info.get("dividendYield")
+        div_rate = info.get("dividendRate")
+        if div_yield or div_rate:
+            result += "**💵 Dividends:**\n"
+            if div_rate:
+                result += f"  Annual Dividend: ${div_rate:.2f}\n"
+            if div_yield:
+                result += f"  Dividend Yield: {div_yield*100:.2f}%\n"
+            payout = info.get("payoutRatio")
+            if payout:
+                result += f"  Payout Ratio: {payout*100:.1f}%\n"
+            result += "\n"
+
+        # Analyst Ratings
+        result += "**🎯 Analyst Consensus:**\n"
+        rec_key = info.get("recommendationKey")
+        if rec_key:
+            result += f"  Rating: {rec_key.upper()}\n"
+
+        target_mean = info.get("targetMeanPrice")
+        if target_mean and current_price:
+            upside = ((target_mean - current_price) / current_price) * 100
+            result += f"  Price Target: ${target_mean:.2f} ({upside:+.1f}%)\n"
+
+        num_analysts = info.get("numberOfAnalystOpinions")
+        if num_analysts:
+            result += f"  # of Analysts: {num_analysts}\n"
+
+        result += "\n"
+
+        # 52-Week Performance
+        result += "**📈 52-Week Performance:**\n"
+        week_low = info.get("fiftyTwoWeekLow")
+        week_high = info.get("fiftyTwoWeekHigh")
+        if week_low and week_high and current_price:
+            result += f"  52W Range: ${week_low:.2f} - ${week_high:.2f}\n"
+            position = (current_price - week_low) / (week_high - week_low) * 100
+            result += f"  Position: {position:.0f}% from low\n"
+
+        beta = info.get("beta")
+        if beta:
+            result += f"  Beta: {beta:.2f}\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Generated financial summary for {ticker}",
+                    "done": True
+                }
+            })
+        return result
+
+    async def get_historical_comparison(
+        self,
+        tickers: str,
+        period: str = "1y",
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Compare historical price performance of multiple stocks.
+
+        Args:
+            tickers: Comma or space-separated ticker symbols (e.g., 'AAPL,MSFT,GOOGL')
+            period: Time period for comparison (default: 1y)
+
+        Returns:
+            Performance comparison showing % returns for each ticker
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        # Parse tickers
+        ticker_list = [t.strip().upper() for t in tickers.replace(",", " ").split() if t.strip()]
+
+        if len(ticker_list) < 2:
+            return "❌ Please provide at least 2 tickers to compare (e.g., 'AAPL,MSFT,GOOGL')"
+
+        if len(ticker_list) > 10:
+            ticker_list = ticker_list[:10]
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📈 Comparing historical performance",
+                    "done": False
+                }
+            })
+
+        result = f"**📈 Historical Performance Comparison**\n"
+        result += f"**Period:** {period}\n\n"
+
+        performance_data = []
+
+        for ticker in ticker_list:
+            try:
+                stock = yf.Ticker(ticker)
+                hist = stock.history(period=period)
+
+                if hist.empty:
+                    continue
+
+                start_price = hist['Close'].iloc[0]
+                end_price = hist['Close'].iloc[-1]
+                high_price = hist['High'].max()
+                low_price = hist['Low'].min()
+
+                total_return = ((end_price - start_price) / start_price) * 100
+                max_drawdown = ((low_price - high_price) / high_price) * 100
+
+                performance_data.append({
+                    "ticker": ticker,
+                    "start_price": start_price,
+                    "end_price": end_price,
+                    "return": total_return,
+                    "high": high_price,
+                    "low": low_price,
+                    "drawdown": max_drawdown,
+                })
+
+            except Exception as e:
+                logger.warning(f"Could not fetch history for {ticker}: {e}")
+
+        if not performance_data:
+            return "❌ Could not fetch historical data for the provided tickers"
+
+        # Sort by return
+        performance_data.sort(key=lambda x: x['return'], reverse=True)
+
+        # Performance table
+        result += "**📊 Performance Rankings:**\n"
+        result += "```\n"
+        result += f"{'Rank':<6} {'Ticker':<8} {'Return':>10} {'Start':>10} {'End':>10}\n"
+        result += "-" * 55 + "\n"
+
+        for i, d in enumerate(performance_data, 1):
+            emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"#{i}"
+            result += f"{emoji:<6} {d['ticker']:<8} {d['return']:>+9.1f}% ${d['start_price']:>9.2f} ${d['end_price']:>9.2f}\n"
+
+        result += "```\n\n"
+
+        # Summary stats
+        result += "**📉 Risk Metrics (Max Drawdown):**\n"
+        for d in performance_data:
+            result += f"  {d['ticker']}: {d['drawdown']:.1f}% (Low: ${d['low']:.2f}, High: ${d['high']:.2f})\n"
+
+        # Best and worst
+        result += "\n**🏆 Summary:**\n"
+        result += f"  Best Performer: {performance_data[0]['ticker']} ({performance_data[0]['return']:+.1f}%)\n"
+        result += f"  Worst Performer: {performance_data[-1]['ticker']} ({performance_data[-1]['return']:+.1f}%)\n"
+
+        avg_return = sum(d['return'] for d in performance_data) / len(performance_data)
+        result += f"  Average Return: {avg_return:+.1f}%\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Completed performance comparison",
+                    "done": True
+                }
+            })
+        return result
+
+    async def get_market_status(
+        self,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Check if US stock markets are currently open.
+
+        Returns:
+            Market status (open/closed), current time, and market hours
+        """
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": "🕐 Checking market status",
+                    "done": False
+                }
+            })
+
+        from datetime import datetime
+        import pytz
+
+        try:
+            # Get Eastern Time
+            eastern = pytz.timezone('US/Eastern')
+            now_et = datetime.now(eastern)
+
+            result = "**🕐 US Market Status**\n\n"
+            result += f"**Current Time (ET):** {now_et.strftime('%Y-%m-%d %H:%M:%S %Z')}\n\n"
+
+            # Check day of week
+            weekday = now_et.weekday()  # 0=Monday, 6=Sunday
+
+            if weekday >= 5:  # Weekend
+                result += "**📊 Status:** 🔴 CLOSED (Weekend)\n\n"
+                result += "Markets are closed on weekends.\n"
+                result += "Next open: Monday at 9:30 AM ET\n"
+            else:
+                # Market hours: 9:30 AM - 4:00 PM ET
+                market_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+                market_close = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+                pre_market_start = now_et.replace(hour=4, minute=0, second=0, microsecond=0)
+                after_hours_end = now_et.replace(hour=20, minute=0, second=0, microsecond=0)
+
+                if market_open <= now_et < market_close:
+                    result += "**📊 Status:** 🟢 OPEN\n\n"
+                    time_to_close = market_close - now_et
+                    hours, remainder = divmod(time_to_close.seconds, 3600)
+                    minutes = remainder // 60
+                    result += f"Time until close: {hours}h {minutes}m\n"
+                elif pre_market_start <= now_et < market_open:
+                    result += "**📊 Status:** 🟡 PRE-MARKET\n\n"
+                    time_to_open = market_open - now_et
+                    hours, remainder = divmod(time_to_open.seconds, 3600)
+                    minutes = remainder // 60
+                    result += f"Time until regular session: {hours}h {minutes}m\n"
+                elif market_close <= now_et < after_hours_end:
+                    result += "**📊 Status:** 🟠 AFTER-HOURS\n\n"
+                    time_to_end = after_hours_end - now_et
+                    hours, remainder = divmod(time_to_end.seconds, 3600)
+                    minutes = remainder // 60
+                    result += f"Time until after-hours ends: {hours}h {minutes}m\n"
+                else:
+                    result += "**📊 Status:** 🔴 CLOSED\n\n"
+
+            result += "\n**🕐 Regular Trading Hours:**\n"
+            result += "  Open: 9:30 AM ET\n"
+            result += "  Close: 4:00 PM ET\n"
+            result += "  Pre-Market: 4:00 AM - 9:30 AM ET\n"
+            result += "  After-Hours: 4:00 PM - 8:00 PM ET\n"
+
+            result += "\n**📅 Note:** Markets are closed on federal holidays."
+
+        except ImportError:
+            # Fallback if pytz not available
+            result = "**🕐 US Market Status**\n\n"
+            result += "ℹ️ Install `pytz` for accurate timezone-based market status.\n"
+            result += "\n**🕐 Regular Trading Hours (ET):**\n"
+            result += "  Open: 9:30 AM ET\n"
+            result += "  Close: 4:00 PM ET\n"
+            result += "  Pre-Market: 4:00 AM - 9:30 AM ET\n"
+            result += "  After-Hours: 4:00 PM - 8:00 PM ET\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": "✅ Retrieved market status",
+                    "done": True
+                }
+            })
+        return result
+
+    # ============================================================
+    # TOOL 50-52: UTILITY & HELPER METHODS
     # ============================================================
 
     async def search_ticker(
@@ -3251,7 +5057,7 @@ class Tools:
             Current API usage statistics and configuration
         """
         result = "**⚙️ yfinance-ai API Status**\n\n"
-        result += f"**Version:** 2.0.1\n"
+        result += f"**Version:** 3.0.0\n"
         result += f"**yfinance Library:** {yf.__version__}\n\n"
 
         result += "**Rate Limiting:**\n"
@@ -3264,7 +5070,7 @@ class Tools:
         result += f"  Max News Items: {self.valves.max_news_items}\n"
         result += f"  Max Comparison Tickers: {self.valves.max_comparison_tickers}\n\n"
 
-        result += "**Available Methods:** 50+ financial data tools\n"
+        result += "**Available Methods:** 55+ financial data tools\n"
         result += "**Status:** ✅ Operational\n"
 
         return result
@@ -3279,7 +5085,7 @@ class Tools:
         __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
-        🧪 Run comprehensive self-test of all 50+ yfinance-ai tools.
+        🧪 Run comprehensive self-test of all 55+ yfinance-ai tools.
 
         This function is designed to be called by AI assistants to verify
         that all tools are working correctly. It tests each tool category,
@@ -3308,7 +5114,7 @@ class Tools:
         result = "**🧪 yfinance-ai Self-Test Report**\n\n"
         result += f"**Test Ticker:** {ticker} (S&P 500 ETF - chosen for comprehensive data coverage)\n"
         result += f"**Test Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        result += f"**Version:** 2.0.1\n\n"
+        result += f"**Version:** 2.0.0\n\n"
         result += "="*60 + "\n\n"
 
         test_results = {}
@@ -3430,7 +5236,7 @@ class Tools:
                 ("get_isin", ["SPY"]),
             ],
             "Company Information": [
-                ("get_company_info", ["AAPL"]),  # Use AAPL for company info
+                ("get_company_info", ["AAPL"]),
                 ("get_company_officers", ["AAPL"]),
             ],
             "Financial Statements": [
@@ -3452,9 +5258,14 @@ class Tools:
                 ("get_earnings_history", ["AAPL"]),
                 ("get_analyst_estimates", ["AAPL"]),
                 ("get_growth_estimates", ["AAPL"]),
+                ("get_eps_trend", ["AAPL"]),
+                ("get_eps_revisions", ["AAPL"]),
+                ("get_earnings_calendar", ["AAPL"]),
             ],
-            "Analyst Recommendations": [
+            "Analyst Data": [
                 ("get_analyst_recommendations", ["AAPL"]),
+                ("get_analyst_price_targets", ["AAPL"]),
+                ("get_upgrades_downgrades", ["AAPL", 5]),
             ],
             "Institutional & Insider Data": [
                 ("get_institutional_holders", ["AAPL"]),
@@ -3479,6 +5290,22 @@ class Tools:
             ],
             "Sustainability": [
                 ("get_sustainability", ["AAPL"]),
+            ],
+            "Fund/ETF Data": [
+                ("get_fund_overview", ["SPY"]),
+                ("get_fund_holdings", ["SPY"]),
+                ("get_fund_sector_weights", ["SPY"]),
+            ],
+            "Crypto, Forex & Commodities": [
+                ("get_crypto_price", ["BTC"]),
+                ("get_forex_rate", ["EURUSD"]),
+                ("get_commodity_price", ["gold"]),
+            ],
+            "Analysis & Comparison": [
+                ("get_peer_comparison", ["AAPL"]),
+                ("get_financial_summary", ["AAPL"]),
+                ("get_historical_comparison", ["AAPL,MSFT", "6mo"]),
+                ("get_market_status", []),
             ],
             "Bulk Operations": [
                 ("download_multiple_tickers", ["SPY QQQ", "1mo", "1d"]),
@@ -3581,5 +5408,5 @@ class Tools:
 
 
 # ============================================================
-# END OF yfinance-ai v2.0.1
+# END OF yfinance-ai v2.0.0
 # ============================================================
