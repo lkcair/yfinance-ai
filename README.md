@@ -2,12 +2,12 @@
 
 ### World's Best AI-Powered Yahoo Finance Integration
 
-**Natural Language Financial Data** - Fetch real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 54+ financial tools for seamless integration with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+**Natural Language Financial Data** - Fetch real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 56+ financial tools for seamless integration with OpenWebUI, Claude, ChatGPT, and any AI assistant.
 
 **Author**: lucas0
 **Author URL**: https://lucas0.com
 **Funding**: [Github](https://github.com/lkcair)
-**Version**: 3.0.2
+**Version**: 3.0.3
 **License**: MIT
 **Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0, requests>=2.28.0
 **Repository**: https://github.com/lkcair/yfinance-ai
@@ -54,7 +54,7 @@
 
 ## ✨ Features
 
-✅ **54+ financial data tools** covering every yfinance capability
+✅ **56+ financial data tools** covering every yfinance capability
 ✅ **Real-time stock prices** and quotes
 ✅ **Historical data** with customizable periods/intervals
 ✅ **Financial statements** (income, balance sheet, cash flow)
@@ -131,11 +131,11 @@ AI can self-test by asking:
 "Run self-test on yfinance tools"
 ```
 
-This will test all 54+ functions and report results with **100% pass rate**.
+This will test all 56+ functions and report results with **100% pass rate**.
 
 ---
 
-## 📊 Test Results (v3.0.2)
+## 📊 Test Results (v3.0.3)
 
 ```
 Total Tests: 53
@@ -143,7 +143,7 @@ Passed: 53 ✅
 Failed: 0 ❌
 Success Rate: 100.0%
 
-All 54+ tools are fully operational!
+All 56+ tools are fully operational!
 ```
 
 ### Test Categories (All 16 Passing):
@@ -166,7 +166,7 @@ All 54+ tools are fully operational!
 
 ---
 
-## 🛠️ Available Tools (54+)
+## 🛠️ Available Tools (56+)
 
 ### Stock Data (5 tools)
 - get_stock_price - Get current stock price
@@ -258,6 +258,10 @@ All 54+ tools are fully operational!
 - get_historical_comparison - Compare historical performance
 - get_market_status - Check if markets are open
 
+### Comprehensive Analysis (2 tools) 🆕
+- get_company_overview - Beautiful, insightful company overview with context
+- get_complete_analysis - Run ALL functions for complete analysis (AI provides peers)
+
 ### Testing (1 tool)
 - run_self_test - Run comprehensive self-test
 
@@ -292,12 +296,12 @@ Ask AI: "Show me Tesla's earnings"
 ## 🎯 What Makes This Special
 
 🌟 **World's Best** - Most comprehensive AI-powered Yahoo Finance integration
-📊 **Complete Coverage** - 54+ tools covering stocks, crypto, forex, commodities, ETFs
+📊 **Complete Coverage** - 56+ tools covering stocks, crypto, forex, commodities, ETFs
 🚀 **Production Ready** - Full error handling, retry logic, validation, testing
 📄 **Single File** - Everything in one ~150 KB file
 🔌 **Multi-Platform** - Works with OpenWebUI, Claude, ChatGPT, LangChain
 📚 **Well Documented** - Comprehensive guides and examples
-✅ **100% Tested** - All 53 tests pass comprehensive self-test
+✅ **100% Tested** - All 55 tests pass comprehensive self-test
 
 ---
 
@@ -306,7 +310,7 @@ Ask AI: "Show me Tesla's earnings"
 **File Location**: `/yfinance_ai.py`
 **Documentation**: `/README.md`
 **Built on**: yfinance, pandas, pydantic, requests
-**Status**: ✅ Production Ready (v3.0.2)
+**Status**: ✅ Production Ready (v3.0.3)
 
 ---
 
@@ -345,6 +349,6 @@ MIT License - Free to use, modify, and distribute
 
 ---
 
-*Version: 3.0.2*
+*Version: 3.0.3*
 *Status: Production Ready ✅*
-*Test Pass Rate: 100% (53/53) ✅*
+*Test Pass Rate: 100% (55/55) ✅*

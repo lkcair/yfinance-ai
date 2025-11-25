@@ -1,10 +1,10 @@
 """
 title: yfinance-ai - World's Best AI-Powered Yahoo Finance Integration
-description: Complete Financial Data Suite - 54+ tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+description: Complete Financial Data Suite - 56+ tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, Claude, ChatGPT, and any AI assistant.
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lucas0
-version: 3.0.2
+version: 3.0.3
 license: MIT
 requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lucas0/yfinance-ai
@@ -25,7 +25,7 @@ INTEGRATION WITH OTHER AI TOOLS:
 - API: Deploy as FastAPI/Flask endpoint
 
 FEATURES:
-✅ 54+ financial data tools - the most comprehensive yfinance integration
+✅ 56+ financial data tools - the most comprehensive yfinance integration
 ✅ Multi-asset support: Stocks, Crypto, Forex, Commodities, ETFs
 ✅ Real-time stock prices and detailed quotes
 ✅ Historical data with customizable periods/intervals
@@ -66,7 +66,7 @@ EXAMPLE PROMPTS FOR AI:
 
 TESTING:
 AI can self-test by asking: "Run self-test on yfinance tools"
-This will test all 54+ functions and report results.
+This will test all 56+ functions and report results.
 """
 
 from typing import Callable, Any, Optional, List, Dict, Union
@@ -444,7 +444,7 @@ class Tools:
         self.valves = self.Valves()
         self._call_count = 0
         self._window_start = time.time()
-        logger.info("yfinance-ai v3.0.2 initialized - 54+ financial tools ready")
+        logger.info("yfinance-ai v3.0.3 initialized - 56+ financial tools ready")
 
     def _check_rate_limit(self) -> bool:
         """Simple rate limiting check"""
@@ -4729,6 +4729,293 @@ class Tools:
             })
         return result
 
+    # ============================================================
+    # TOOL: COMPANY OVERVIEW (Beautiful & Insightful)
+    # ============================================================
+
+    @safe_ticker_call
+    async def get_company_overview(
+        self,
+        ticker: str,
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Get a beautiful, insightful company overview with context for every metric.
+        Perfect for quick overviews and basic questions about a company.
+
+        Args:
+            ticker: Stock ticker symbol (e.g., 'AAPL', 'MSFT')
+
+        Returns:
+            Beautifully formatted company overview with insights and context
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"📊 Building company overview for {ticker}",
+                    "done": False
+                }
+            })
+
+        stock = yf.Ticker(ticker)
+        info = stock.info
+
+        if not info or info.get("regularMarketPrice") is None:
+            return f"❌ Could not retrieve data for {ticker}. Please verify the ticker symbol."
+
+        # Extract all needed data
+        name = info.get("longName") or info.get("shortName") or ticker
+        sector = info.get("sector", "N/A")
+        industry = info.get("industry", "N/A")
+
+        # Build the beautiful output
+        header_line = "═" * 65
+        section_line = "━" * 65
+
+        result = f"\n{header_line}\n"
+        result += f"                    {name.upper()} ({ticker})\n"
+        result += f"                    {sector} | {industry}\n"
+        result += f"{header_line}\n\n"
+
+        # 📍 COMPANY SNAPSHOT
+        result += f"📍 COMPANY SNAPSHOT\n{section_line}\n"
+
+        city = info.get("city", "")
+        state = info.get("state", "")
+        country = info.get("country", "")
+        location_parts = [p for p in [city, state, country] if p]
+        location = ", ".join(location_parts) if location_parts else "N/A"
+
+        result += f"Headquarters: {location}\n"
+
+        employees = info.get("fullTimeEmployees")
+        if employees:
+            result += f"Employees: {employees:,}\n"
+
+        website = info.get("website", "")
+        if website:
+            result += f"Website: {website.replace('https://', '').replace('http://', '').rstrip('/')}\n"
+
+        exchange = info.get("exchange", "N/A")
+        result += f"Exchange: {exchange}\n\n"
+
+        # Business description
+        description = info.get("longBusinessSummary", "")
+        if description:
+            # Truncate to ~200 chars
+            if len(description) > 200:
+                description = description[:200].rsplit(' ', 1)[0] + "..."
+            result += f"{description}\n\n"
+
+        # 💰 MARKET POSITION
+        result += f"💰 MARKET POSITION\n{section_line}\n"
+
+        current_price = info.get("regularMarketPrice") or info.get("currentPrice") or info.get("previousClose")
+        market_cap = info.get("marketCap")
+
+        price_str = f"${current_price:.2f}" if current_price else "N/A"
+        cap_str = format_large_number(market_cap) if market_cap else "N/A"
+
+        result += f"Current Price:     {price_str:<15} Market Cap:      {cap_str}\n"
+
+        # Day change
+        prev_close = info.get("previousClose") or info.get("regularMarketPreviousClose")
+        if current_price and prev_close:
+            change = current_price - prev_close
+            change_pct = (change / prev_close) * 100
+            sign = "+" if change >= 0 else ""
+            result += f"Day Change:        {sign}${change:.2f} ({sign}{change_pct:.2f}%)"
+
+        volume = info.get("regularMarketVolume") or info.get("volume")
+        avg_volume = info.get("averageVolume")
+        if volume:
+            vol_str = format_large_number(volume).replace("$", "")
+            avg_str = format_large_number(avg_volume).replace("$", "") if avg_volume else "N/A"
+            result += f" | Volume: {vol_str} (avg: {avg_str})"
+        result += "\n"
+
+        # 52-week range with position
+        week_low = info.get("fiftyTwoWeekLow")
+        week_high = info.get("fiftyTwoWeekHigh")
+        if week_low and week_high and current_price:
+            position = ((current_price - week_low) / (week_high - week_low)) * 100
+            result += f"52-Week Range:     ${week_low:.2f} - ${week_high:.2f} (currently {position:.0f}% of range)\n"
+
+        # All-time high if available
+        ath = info.get("fiftyTwoWeekHigh")
+        if ath and current_price:
+            from_ath = ((current_price - ath) / ath) * 100
+            if abs(from_ath) < 5:
+                result += f"Near 52-Week High: ${ath:.2f} ({from_ath:+.1f}% from high)\n"
+        result += "\n"
+
+        # 📊 VALUATION SNAPSHOT
+        result += f"📊 VALUATION SNAPSHOT\n{section_line}\n"
+        result += "┌─────────────┬──────────┬─────────────────────────────────┐\n"
+        result += "│ Metric      │ Value    │ Context                         │\n"
+        result += "├─────────────┼──────────┼─────────────────────────────────┤\n"
+
+        pe = info.get("trailingPE")
+        fwd_pe = info.get("forwardPE")
+        peg = info.get("pegRatio")
+        pb = info.get("priceToBook")
+        ps = info.get("priceToSalesTrailing12Months")
+        ev_ebitda = info.get("enterpriseToEbitda")
+
+        if pe:
+            context = "Premium" if pe > 25 else "Fair value" if pe > 15 else "Value territory"
+            result += f"│ P/E Ratio   │ {pe:>8.1f}x │ {context:<31} │\n"
+        if fwd_pe:
+            context = "Growth expected" if fwd_pe < pe else "Earnings pressure" if pe else "Forward estimate"
+            result += f"│ Forward P/E │ {fwd_pe:>8.1f}x │ {context:<31} │\n"
+        if peg:
+            context = ">1 growth priced in" if peg > 1 else "<1 potential value"
+            result += f"│ PEG Ratio   │ {peg:>8.2f} │ {context:<31} │\n"
+        if pb:
+            context = "Asset-light business" if pb > 10 else "Moderate" if pb > 3 else "Asset-heavy"
+            result += f"│ P/B Ratio   │ {pb:>8.1f}x │ {context:<31} │\n"
+        if ps:
+            context = "Premium pricing" if ps > 5 else "Moderate" if ps > 2 else "Revenue focus"
+            result += f"│ P/S Ratio   │ {ps:>8.1f}x │ {context:<31} │\n"
+        if ev_ebitda:
+            context = "Above avg" if ev_ebitda > 15 else "Fair" if ev_ebitda > 10 else "Below avg"
+            result += f"│ EV/EBITDA   │ {ev_ebitda:>8.1f}x │ {context:<31} │\n"
+
+        result += "└─────────────┴──────────┴─────────────────────────────────┘\n\n"
+
+        # 💪 FINANCIAL HEALTH
+        result += f"💪 FINANCIAL HEALTH\n{section_line}\n"
+
+        revenue = info.get("totalRevenue")
+        net_income = info.get("netIncomeToCommon")
+        profit_margin = info.get("profitMargins")
+        op_margin = info.get("operatingMargins")
+        fcf = info.get("freeCashflow")
+        debt_equity = info.get("debtToEquity")
+        current_ratio = info.get("currentRatio")
+        cash = info.get("totalCash")
+        debt = info.get("totalDebt")
+
+        rev_str = format_large_number(revenue) if revenue else "N/A"
+        inc_str = format_large_number(net_income) if net_income else "N/A"
+        result += f"Revenue (TTM):        {rev_str:<12} Net Income:      {inc_str}\n"
+
+        pm_str = f"{profit_margin*100:.1f}%" if profit_margin else "N/A"
+        om_str = f"{op_margin*100:.1f}%" if op_margin else "N/A"
+        result += f"Profit Margin:        {pm_str:<12} Operating Margin: {om_str}\n"
+
+        fcf_str = format_large_number(fcf) if fcf else "N/A"
+        fcf_note = " ← Strong cash generation" if fcf and fcf > 0 else ""
+        result += f"Free Cash Flow:       {fcf_str}{fcf_note}\n"
+
+        de_str = f"{debt_equity/100:.2f}" if debt_equity else "N/A"
+        cr_str = f"{current_ratio:.2f}" if current_ratio else "N/A"
+        result += f"Debt/Equity:          {de_str:<12} Current Ratio:   {cr_str}\n"
+
+        cash_str = format_large_number(cash) if cash else "N/A"
+        debt_str = format_large_number(debt) if debt else "N/A"
+        result += f"Cash Position:        {cash_str:<12} Total Debt:      {debt_str}\n"
+
+        # Key insight for financial health
+        if fcf and debt and fcf > 0:
+            coverage = fcf / debt if debt > 0 else 999
+            if coverage > 0.3:
+                result += f"\n⚡ KEY INSIGHT: Strong cash flow covers debt {coverage:.1f}x annually.\n"
+            elif coverage > 0.1:
+                result += f"\n⚡ KEY INSIGHT: Moderate cash flow - {coverage:.1f}x debt coverage.\n"
+        result += "\n"
+
+        # 💵 SHAREHOLDER RETURNS
+        result += f"💵 SHAREHOLDER RETURNS\n{section_line}\n"
+
+        div_yield = info.get("dividendYield")
+        div_rate = info.get("dividendRate")
+        payout = info.get("payoutRatio")
+        ex_div = info.get("exDividendDate")
+
+        if div_yield or div_rate:
+            yield_str = f"{div_yield*100:.2f}%" if div_yield else "N/A"
+            rate_str = f"${div_rate:.2f}/share" if div_rate else "N/A"
+            result += f"Dividend Yield:   {yield_str:<15} Annual Dividend: {rate_str}\n"
+
+            if payout:
+                payout_pct = payout * 100
+                note = " ← Very sustainable" if payout_pct < 50 else " ← High payout" if payout_pct > 80 else ""
+                result += f"Payout Ratio:     {payout_pct:.1f}%{note}\n"
+
+            if ex_div:
+                from datetime import datetime
+                ex_date = datetime.fromtimestamp(ex_div).strftime("%b %d, %Y")
+                result += f"Ex-Dividend:      {ex_date}\n"
+        else:
+            result += "No regular dividend currently paid.\n"
+        result += "\n"
+
+        # 🎯 ANALYST CONSENSUS
+        result += f"🎯 ANALYST CONSENSUS\n{section_line}\n"
+
+        rec = info.get("recommendationKey", "").upper()
+        rec_mean = info.get("recommendationMean")
+        target_mean = info.get("targetMeanPrice")
+        target_low = info.get("targetLowPrice")
+        target_high = info.get("targetHighPrice")
+        num_analysts = info.get("numberOfAnalystOpinions")
+
+        if rec or rec_mean:
+            rec_str = rec if rec else "N/A"
+            mean_str = f"({rec_mean:.1f}/5.0)" if rec_mean else ""
+            analyst_str = f"Coverage: {num_analysts} analysts" if num_analysts else ""
+            result += f"Rating:          {rec_str} {mean_str}   {analyst_str}\n"
+
+        if target_mean:
+            result += f"Price Target:    ${target_mean:.2f} (mean)\n"
+            if target_low and target_high:
+                result += f"                 Low: ${target_low:.0f} | High: ${target_high:.0f}\n"
+
+            if current_price:
+                upside = ((target_mean - current_price) / current_price) * 100
+                result += f"Upside:          {upside:+.1f}% from current price\n"
+        result += "\n"
+
+        # 📈 PERFORMANCE & RISK
+        result += f"📈 PERFORMANCE & RISK\n{section_line}\n"
+
+        # Calculate 1-year return from 52-week data
+        if week_low and week_high and current_price:
+            # Approximate 1Y return using current vs 52-week data
+            year_return = info.get("52WeekChange")
+            if year_return:
+                yr_str = f"{year_return*100:+.1f}%"
+                # Compare to S&P approximate
+                result += f"1-Year Return:    {yr_str:<15}"
+                sp_return = info.get("SandP52WeekChange")
+                if sp_return:
+                    comparison = "✓ Outperforming" if year_return > sp_return else "Underperforming"
+                    result += f"vs S&P 500: {sp_return*100:+.1f}%  {comparison}"
+                result += "\n"
+
+        beta = info.get("beta")
+        if beta:
+            vol_desc = "Low volatility" if beta < 0.8 else "Market-like" if beta < 1.2 else "Higher volatility"
+            result += f"Beta:             {beta:.2f} ({vol_desc})\n"
+
+        result += f"\n{header_line}\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Company overview complete for {ticker}",
+                    "done": True
+                }
+            })
+
+        return result
+
     async def get_historical_comparison(
         self,
         tickers: str,
@@ -5068,7 +5355,7 @@ class Tools:
         result += f"  Max News Items: {self.valves.max_news_items}\n"
         result += f"  Max Comparison Tickers: {self.valves.max_comparison_tickers}\n\n"
 
-        result += "**Available Methods:** 54+ financial data tools\n"
+        result += "**Available Methods:** 56+ financial data tools\n"
         result += "**Status:** ✅ Operational\n"
 
         return result
@@ -5401,7 +5688,280 @@ class Tools:
 
         return result
 
+    # ============================================================
+    # TOOL: COMPLETE ANALYSIS (Run All Functions)
+    # ============================================================
+
+    async def get_complete_analysis(
+        self,
+        ticker: str,
+        peers: str = "",
+        __event_emitter__: Callable[[dict], Any] = None
+    ) -> str:
+        """
+        Run a complete analysis of a stock by calling ALL available functions.
+        This is the most comprehensive analysis available - use when user asks
+        for "everything about" or "complete analysis of" a company.
+
+        Args:
+            ticker: Stock ticker symbol (e.g., 'AAPL', 'MSFT')
+            peers: Optional comma-separated peer tickers for comparison (e.g., 'MSFT,GOOGL,META')
+                   AI should provide contextually relevant peers based on the conversation.
+
+        Returns:
+            Comprehensive analysis with results from all applicable functions
+        """
+        if not self._check_rate_limit():
+            return "⚠️ Rate limit exceeded."
+
+        ticker = ticker.upper().strip()
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"🔬 Starting complete analysis for {ticker}...",
+                    "done": False
+                }
+            })
+
+        result = f"# 🔬 COMPLETE ANALYSIS: {ticker}\n\n"
+        result += "Running all available functions to provide comprehensive data...\n\n"
+
+        # Track results
+        functions_run = 0
+        functions_failed = []
+        functions_no_data = []
+
+        # Get basic info first to determine if it's an ETF/fund
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        is_fund = info.get("quoteType") in ["ETF", "MUTUALFUND"] or "fund" in info.get("longName", "").lower()
+        sector = info.get("sector", "Unknown")
+        industry = info.get("industry", "Unknown")
+
+        # Define all single-ticker functions to run
+        single_ticker_functions = [
+            # Basic Info
+            ("get_stock_price", [], "📈 Stock Price"),
+            ("get_fast_info", [], "⚡ Fast Info"),
+            ("get_stock_quote", [], "💹 Detailed Quote"),
+            ("get_isin", [], "🔖 ISIN"),
+            # Company
+            ("get_company_info", [], "🏢 Company Info"),
+            ("get_company_officers", [], "👔 Company Officers"),
+            # Financials
+            ("get_income_statement", ["annual"], "📊 Income Statement (Annual)"),
+            ("get_income_statement", ["quarterly"], "📊 Income Statement (Quarterly)"),
+            ("get_balance_sheet", ["annual"], "📋 Balance Sheet"),
+            ("get_cash_flow", ["annual"], "💵 Cash Flow"),
+            ("get_key_ratios", [], "📐 Key Ratios"),
+            # Historical
+            ("get_historical_data", ["1y", "1d"], "📉 Historical Data (1Y)"),
+            # Dividends
+            ("get_dividends", ["5y"], "💰 Dividends"),
+            ("get_stock_splits", [], "✂️ Stock Splits"),
+            ("get_corporate_actions", [], "📅 Corporate Actions"),
+            ("get_capital_gains", [], "💎 Capital Gains"),
+            # Earnings
+            ("get_earnings_dates", [], "📆 Earnings Dates"),
+            ("get_earnings_history", [], "📈 Earnings History"),
+            ("get_analyst_estimates", [], "🎯 Analyst Estimates"),
+            ("get_growth_estimates", [], "🌱 Growth Estimates"),
+            ("get_eps_trend", [], "📊 EPS Trend"),
+            ("get_eps_revisions", [], "🔄 EPS Revisions"),
+            ("get_earnings_calendar", [], "🗓️ Earnings Calendar"),
+            # Analyst
+            ("get_analyst_recommendations", [], "👨‍💼 Analyst Recommendations"),
+            ("get_analyst_price_targets", [], "🎯 Price Targets"),
+            ("get_upgrades_downgrades", [20], "⬆️⬇️ Upgrades/Downgrades"),
+            # Ownership
+            ("get_institutional_holders", [], "🏛️ Institutional Holders"),
+            ("get_major_holders", [], "👥 Major Holders"),
+            ("get_mutualfund_holders", [], "📊 Mutual Fund Holders"),
+            ("get_insider_transactions", [], "🔍 Insider Transactions"),
+            ("get_insider_purchases", [], "💼 Insider Purchases"),
+            ("get_insider_roster_holders", [], "📋 Insider Roster"),
+            # Options
+            ("get_options_expirations", [], "📅 Options Expirations"),
+            # News
+            ("get_stock_news", [10], "📰 Recent News"),
+            ("get_sec_filings", [], "📄 SEC Filings"),
+        ]
+
+        # Fund-specific functions (only for ETFs/funds)
+        fund_functions = [
+            ("get_fund_overview", [], "🏦 Fund Overview"),
+            ("get_fund_holdings", [25], "📊 Fund Holdings"),
+            ("get_fund_sector_weights", [], "📈 Fund Sector Weights"),
+        ]
+
+        # Market context functions
+        market_functions = [
+            ("get_market_indices", [], "📊 Market Indices"),
+            ("get_sector_performance", [], "📈 Sector Performance"),
+            ("get_market_status", [], "🕐 Market Status"),
+        ]
+
+        # Run single-ticker functions
+        result += "=" * 60 + "\n"
+        result += "## 📋 SINGLE-TICKER DATA\n"
+        result += "=" * 60 + "\n\n"
+
+        for func_name, args, label in single_ticker_functions:
+            try:
+                if __event_emitter__:
+                    await __event_emitter__({
+                        "type": "status",
+                        "data": {
+                            "description": f"Running {label}...",
+                            "done": False
+                        }
+                    })
+
+                method = getattr(self, func_name)
+                response = await method(ticker, *args)
+                functions_run += 1
+
+                # Check if response has actual data
+                if response and "❌" not in response and "No " not in response[:50]:
+                    result += f"### {label}\n"
+                    result += response + "\n\n"
+                else:
+                    functions_no_data.append(func_name)
+
+            except Exception as e:
+                functions_failed.append(f"{func_name}: {str(e)[:50]}")
+                logger.warning(f"Complete analysis - {func_name} failed: {e}")
+
+        # Run fund functions if applicable
+        if is_fund:
+            result += "=" * 60 + "\n"
+            result += "## 🏦 FUND/ETF DATA\n"
+            result += "=" * 60 + "\n\n"
+
+            for func_name, args, label in fund_functions:
+                try:
+                    method = getattr(self, func_name)
+                    response = await method(ticker, *args) if args else await method(ticker)
+                    functions_run += 1
+
+                    if response and "❌" not in response:
+                        result += f"### {label}\n"
+                        result += response + "\n\n"
+                except Exception as e:
+                    functions_failed.append(f"{func_name}: {str(e)[:50]}")
+
+        # Run options chain for nearest expiration
+        try:
+            expirations_response = await self.get_options_expirations(ticker)
+            if "❌" not in expirations_response:
+                # Extract first expiration date
+                import re
+                dates = re.findall(r'\d{4}-\d{2}-\d{2}', expirations_response)
+                if dates:
+                    result += f"### 📊 Options Chain ({dates[0]})\n"
+                    options_response = await self.get_options_chain(ticker, dates[0])
+                    result += options_response + "\n\n"
+                    functions_run += 1
+        except Exception as e:
+            functions_failed.append(f"get_options_chain: {str(e)[:50]}")
+
+        # Run peer comparisons if peers provided
+        if peers:
+            peer_list = [p.strip().upper() for p in peers.replace(" ", ",").split(",") if p.strip()]
+            if peer_list:
+                result += "=" * 60 + "\n"
+                result += "## ⚖️ PEER COMPARISONS\n"
+                result += f"Comparing with: {', '.join(peer_list)}\n"
+                result += "=" * 60 + "\n\n"
+
+                comparison_tickers = f"{ticker},{','.join(peer_list)}"
+
+                try:
+                    if __event_emitter__:
+                        await __event_emitter__({
+                            "type": "status",
+                            "data": {
+                                "description": f"Running peer comparisons...",
+                                "done": False
+                            }
+                        })
+
+                    # Stock comparison
+                    result += "### ⚖️ Stock Comparison\n"
+                    compare_response = await self.compare_stocks(comparison_tickers)
+                    result += compare_response + "\n\n"
+                    functions_run += 1
+
+                    # Historical comparison
+                    result += "### 📈 Historical Performance Comparison\n"
+                    hist_response = await self.get_historical_comparison(comparison_tickers, "1y")
+                    result += hist_response + "\n\n"
+                    functions_run += 1
+
+                    # Peer comparison
+                    result += "### 👥 Peer Comparison\n"
+                    peer_response = await self.get_peer_comparison(ticker, peers)
+                    result += peer_response + "\n\n"
+                    functions_run += 1
+
+                except Exception as e:
+                    functions_failed.append(f"peer_comparisons: {str(e)[:50]}")
+
+        # Run market context
+        result += "=" * 60 + "\n"
+        result += "## 🌍 MARKET CONTEXT\n"
+        result += "=" * 60 + "\n\n"
+
+        for func_name, args, label in market_functions:
+            try:
+                method = getattr(self, func_name)
+                response = await method()
+                functions_run += 1
+
+                if response and "❌" not in response:
+                    result += f"### {label}\n"
+                    result += response + "\n\n"
+            except Exception as e:
+                functions_failed.append(f"{func_name}: {str(e)[:50]}")
+
+        # Summary
+        result += "=" * 60 + "\n"
+        result += "## 📊 ANALYSIS SUMMARY\n"
+        result += "=" * 60 + "\n\n"
+
+        result += f"**Ticker:** {ticker}\n"
+        result += f"**Sector:** {sector}\n"
+        result += f"**Industry:** {industry}\n"
+        result += f"**Type:** {'ETF/Fund' if is_fund else 'Stock'}\n\n"
+
+        result += f"**Functions Run:** {functions_run}\n"
+        if functions_no_data:
+            result += f"**Functions with No Data:** {len(functions_no_data)} (normal for some tickers)\n"
+        if functions_failed:
+            result += f"**Functions Failed:** {len(functions_failed)}\n"
+            for fail in functions_failed[:5]:  # Show first 5 failures
+                result += f"  - {fail}\n"
+
+        if peers:
+            result += f"\n**Peer Comparison:** {peers}\n"
+        else:
+            result += f"\n**Tip:** For peer comparisons, AI can specify peers parameter\n"
+            result += f"  Suggested peers for {sector}: Use similar companies in the same sector\n"
+
+        if __event_emitter__:
+            await __event_emitter__({
+                "type": "status",
+                "data": {
+                    "description": f"✅ Complete analysis finished for {ticker} ({functions_run} functions)",
+                    "done": True
+                }
+            })
+
+        return result
+
 
 # ============================================================
-# END OF yfinance-ai v3.0.2
+# END OF yfinance-ai v3.0.3
 # ============================================================
