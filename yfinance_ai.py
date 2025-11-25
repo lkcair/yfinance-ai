@@ -4,7 +4,7 @@ description: Complete Financial Data Suite - 55+ tools for stocks, crypto, forex
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lucas0
-version: 3.0.0
+version: 3.0.1
 license: MIT
 requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lucas0/yfinance-ai
@@ -2593,7 +2593,8 @@ class Tools:
         for idx, row in holders.iterrows():
             holder = row.get("Holder", "N/A")
             shares = row.get("Shares", 0)
-            pct = row.get("% Out", "N/A")
+            # Try multiple column names for percentage ownership
+            pct = row.get("pctHeld") or row.get("% Out") or row.get("% Held")
             value = row.get("Value", 0)
 
             result += f"**{holder}**\n"
@@ -2603,7 +2604,14 @@ class Tools:
             else:
                 result += f"  Shares: {shares}\n"
 
-            result += f"  Ownership: {pct}\n"
+            # Format percentage properly
+            if pct is not None and isinstance(pct, (int, float)):
+                if pct < 1:  # Decimal format like 0.0923
+                    result += f"  Ownership: {pct*100:.2f}%\n"
+                else:  # Already percentage
+                    result += f"  Ownership: {pct:.2f}%\n"
+            else:
+                result += f"  Ownership: {pct if pct else 'N/A'}\n"
 
             if isinstance(value, (int, float)) and value > 0:
                 result += f"  Value: {format_large_number(value)}\n\n"
@@ -3714,9 +3722,33 @@ class Tools:
         if total_assets:
             result += f"  Total Assets: {format_large_number(total_assets)}\n"
 
-        expense_ratio = info.get("annualReportExpenseRatio") or info.get("expenseRatio")
-        if expense_ratio:
-            result += f"  Expense Ratio: {expense_ratio*100:.2f}%\n"
+        # Get expense ratio - try funds_data first (more reliable), then info fallback
+        expense_ratio = None
+        try:
+            funds_data = stock.funds_data
+            if funds_data is not None:
+                fund_ops = funds_data.fund_operations
+                if fund_ops is not None and not fund_ops.empty:
+                    if "Annual Report Expense Ratio" in fund_ops.index:
+                        # fund_operations has index as metric name, columns include 'Value'
+                        exp_val = fund_ops.loc["Annual Report Expense Ratio"]
+                        if isinstance(exp_val, pd.Series):
+                            expense_ratio = exp_val.iloc[0]  # Get first column value
+                        else:
+                            expense_ratio = exp_val
+        except Exception as e:
+            logger.debug(f"Could not get expense ratio from funds_data: {e}")
+
+        # Fallback to info dict
+        if expense_ratio is None:
+            expense_ratio = info.get("annualReportExpenseRatio") or info.get("expenseRatio") or info.get("annualHoldingsTurnover")
+
+        if expense_ratio is not None and expense_ratio > 0:
+            # Format expense ratio - handle both decimal (0.0003) and percentage (0.03) formats
+            if expense_ratio < 0.1:
+                result += f"  Expense Ratio: {expense_ratio*100:.2f}%\n"
+            else:
+                result += f"  Expense Ratio: {expense_ratio:.2f}%\n"
 
         nav = info.get("navPrice")
         if nav:
@@ -3834,14 +3866,47 @@ class Tools:
                 # Limit results
                 holdings = holdings.head(limit)
 
-                for idx, row in holdings.iterrows():
-                    holding_name = row.get("holdingName") or row.get("Name") or row.get("Holder") or str(idx)
-                    weight = row.get("holdingPercent") or row.get("pctHeld") or row.get("% Held")
+                # Debug: log available columns
+                logger.debug(f"Holdings columns for {ticker}: {list(holdings.columns)}")
 
-                    result += f"**{idx + 1 if isinstance(idx, int) else idx}. {holding_name}**\n"
-                    if weight:
+                for idx, row in holdings.iterrows():
+                    # Try multiple column name variations
+                    holding_name = (
+                        row.get("Name") or
+                        row.get("holdingName") or
+                        row.get("Holder") or
+                        row.get("name") or
+                        str(idx)
+                    )
+                    # Correct column name is "Holding Percent" per yfinance API
+                    weight = (
+                        row.get("Holding Percent") or
+                        row.get("holdingPercent") or
+                        row.get("pctHeld") or
+                        row.get("% Held") or
+                        row.get("Weight")
+                    )
+
+                    # Get symbol if available
+                    symbol = row.get("Symbol") or row.get("symbol") or ""
+
+                    # Format holding entry
+                    if isinstance(idx, int):
+                        result += f"**{idx + 1}. {holding_name}**"
+                    else:
+                        result += f"**{idx}. {holding_name}**"
+
+                    if symbol:
+                        result += f" ({symbol})"
+                    result += "\n"
+
+                    if weight is not None:
                         if isinstance(weight, (int, float)):
-                            result += f"   Weight: {weight*100:.2f}%\n" if weight < 1 else f"   Weight: {weight:.2f}%\n"
+                            # Handle both decimal (0.07) and percentage (7.0) formats
+                            if weight < 1:
+                                result += f"   Weight: {weight*100:.2f}%\n"
+                            else:
+                                result += f"   Weight: {weight:.2f}%\n"
                         else:
                             result += f"   Weight: {weight}\n"
                     result += "\n"
@@ -5114,7 +5179,7 @@ class Tools:
         result = "**🧪 yfinance-ai Self-Test Report**\n\n"
         result += f"**Test Ticker:** {ticker} (S&P 500 ETF - chosen for comprehensive data coverage)\n"
         result += f"**Test Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        result += f"**Version:** 2.0.0\n\n"
+        result += f"**Version:** 3.0.1\n\n"
         result += "="*60 + "\n\n"
 
         test_results = {}
