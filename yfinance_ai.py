@@ -1,10 +1,10 @@
 """
 title: yfinance-ai - World's Best AI-Powered Yahoo Finance Integration
-description: Complete Financial Data Suite - 55+ tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+description: Complete Financial Data Suite - 54+ tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, Claude, ChatGPT, and any AI assistant.
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lucas0
-version: 3.0.1
+version: 3.0.2
 license: MIT
 requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lucas0/yfinance-ai
@@ -25,7 +25,7 @@ INTEGRATION WITH OTHER AI TOOLS:
 - API: Deploy as FastAPI/Flask endpoint
 
 FEATURES:
-✅ 55+ financial data tools - the most comprehensive yfinance integration
+✅ 54+ financial data tools - the most comprehensive yfinance integration
 ✅ Multi-asset support: Stocks, Crypto, Forex, Commodities, ETFs
 ✅ Real-time stock prices and detailed quotes
 ✅ Historical data with customizable periods/intervals
@@ -38,7 +38,6 @@ FEATURES:
 ✅ Options chains and derivatives data
 ✅ Company news and SEC filings (with robust fallbacks)
 ✅ Market indices and sector performance
-✅ ESG/Sustainability scores
 ✅ ETF/Fund data: holdings, sector weights, expense ratios
 ✅ Bulk operations and stock comparison
 ✅ Peer comparison and financial summaries
@@ -67,7 +66,7 @@ EXAMPLE PROMPTS FOR AI:
 
 TESTING:
 AI can self-test by asking: "Run self-test on yfinance tools"
-This will test all 55+ functions and report results.
+This will test all 54+ functions and report results.
 """
 
 from typing import Callable, Any, Optional, List, Dict, Union
@@ -406,7 +405,6 @@ class Tools:
     - Options chains and derivatives
     - Market news and SEC filings
     - Sector performance and market indices
-    - ESG/Sustainability scores
     - Built-in self-testing capabilities
 
     Author: lucas0 (https://lucas0.com)
@@ -446,7 +444,7 @@ class Tools:
         self.valves = self.Valves()
         self._call_count = 0
         self._window_start = time.time()
-        logger.info("yfinance-ai v3.0.0 initialized - 55+ financial tools ready")
+        logger.info("yfinance-ai v3.0.2 initialized - 54+ financial tools ready")
 
     def _check_rate_limit(self) -> bool:
         """Simple rate limiting check"""
@@ -3604,72 +3602,7 @@ class Tools:
         return result
 
     # ============================================================
-    # TOOL 36: SUSTAINABILITY & ESG
-    # ============================================================
-
-    @safe_ticker_call
-    async def get_sustainability(
-        self,
-        ticker: str,
-        __event_emitter__: Callable[[dict], Any] = None
-    ) -> str:
-        """
-        Get ESG (Environmental, Social, Governance) scores and sustainability metrics.
-
-        Args:
-            ticker: Stock ticker symbol
-
-        Returns:
-            ESG scores and sustainability ratings
-        """
-        if not self._check_rate_limit():
-            return "⚠️ Rate limit exceeded."
-
-        if __event_emitter__:
-            await __event_emitter__({
-                "type": "status",
-                "data": {
-                    "description": f"🌱 Retrieving ESG data for {ticker}",
-                    "done": False
-                }
-            })
-
-        stock = yf.Ticker(ticker)
-
-        try:
-            sustainability = stock.sustainability
-
-            if sustainability is None or (hasattr(sustainability, 'empty') and sustainability.empty):
-                # Check if it's a large cap stock that should have ESG data
-                info = stock.info
-                market_cap = info.get('marketCap', 0)
-                if market_cap and market_cap > 10_000_000_000:  # >$10B
-                    return f"ℹ️ ESG/Sustainability data for {ticker} may not be available via yfinance. Large companies typically have ESG data but it may not be accessible through this API."
-                return f"ℹ️ No ESG/Sustainability data available for {ticker}. ESG data is typically available only for large-cap companies."
-
-            result = f"**🌱 Sustainability & ESG: {ticker}**\n\n"
-
-            # Display sustainability metrics
-            metrics_found = 0
-            for metric, value in sustainability.items():
-                try:
-                    if pd.notna(value):
-                        result += f"**{metric}:** {value}\n"
-                        metrics_found += 1
-                except:
-                    continue
-
-            if metrics_found == 0:
-                return f"ℹ️ No ESG/Sustainability metrics found for {ticker}"
-
-            return result
-
-        except Exception as e:
-            logger.debug(f"Sustainability data error for {ticker}: {e}")
-            return f"ℹ️ ESG/Sustainability data not available for {ticker}. This data is limited to select large-cap companies."
-
-    # ============================================================
-    # TOOL 37-39: FUND/ETF DATA
+    # TOOL 36-38: FUND/ETF DATA
     # ============================================================
 
     @safe_ticker_call
@@ -4403,7 +4336,7 @@ class Tools:
             await __event_emitter__({
                 "type": "status",
                 "data": {
-                    "description": f"🌱 Retrieving ESG data for {ticker}",
+                    "description": f"📥 Downloading data for {tickers}",
                     "done": False
                 }
             })
@@ -5135,7 +5068,7 @@ class Tools:
         result += f"  Max News Items: {self.valves.max_news_items}\n"
         result += f"  Max Comparison Tickers: {self.valves.max_comparison_tickers}\n\n"
 
-        result += "**Available Methods:** 55+ financial data tools\n"
+        result += "**Available Methods:** 54+ financial data tools\n"
         result += "**Status:** ✅ Operational\n"
 
         return result
@@ -5254,7 +5187,7 @@ class Tools:
             # Expected no-data scenarios (not failures)
             optional_data_tools = [
                 "get_stock_splits", "get_capital_gains", "get_insider_purchases",
-                "get_sec_filings", "get_sustainability", "get_mutualfund_holders"
+                "get_sec_filings", "get_mutualfund_holders"
             ]
 
             if tool_name in optional_data_tools:
@@ -5352,9 +5285,6 @@ class Tools:
                 ("get_market_indices", []),
                 ("compare_stocks", ["SPY,QQQ,DIA"]),
                 ("get_sector_performance", []),
-            ],
-            "Sustainability": [
-                ("get_sustainability", ["AAPL"]),
             ],
             "Fund/ETF Data": [
                 ("get_fund_overview", ["SPY"]),
@@ -5473,5 +5403,5 @@ class Tools:
 
 
 # ============================================================
-# END OF yfinance-ai v3.0.1
+# END OF yfinance-ai v3.0.2
 # ============================================================
