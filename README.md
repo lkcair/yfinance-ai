@@ -11,7 +11,7 @@
 **License**: MIT
 **Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0, requests>=2.28.0
 **Repository**: https://github.com/lkcair/yfinance-ai
-**OpenWebUI Page**. Download yfinance on the OpenWebUI Website: https://openwebui.com/t/lkcair/yfinance_ai_tool
+**OpenWebUI Page**. Download yfinance on the OpenWebUI Website: https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1
 
 ---
 
@@ -19,7 +19,7 @@
 
 ## 🚀 OpenWebUI Automatic Installation
 
-1. Download yfinance on the [OpenWebUI Website](https://openwebui.com/t/lkcair/yfinance_ai_tool)
+1. Download yfinance on the [OpenWebUI Website](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1)
 2. Click on **Get**
 3. Write your OpenWebUI address for import to work.
 4. Click on **Save** inside your OpenWebUI installation.
