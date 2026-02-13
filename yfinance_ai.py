@@ -669,8 +669,8 @@ class Tools:
         ask_size = safe_get(info, 'askSize')
 
         result += f"**Bid/Ask Spread:**\n"
-        result += f"  Bid: ${bid} × {bid_size}\n"
-        result += f"  Ask: ${ask} × {ask_size}\n\n"
+        result += f"  Bid: ${bid}  {bid_size}\n"
+        result += f"  Ask: ${ask}  {ask_size}\n\n"
 
         # Day trading range
         result += f"**Day Range:** ${safe_get(info, 'dayLow')} - ${safe_get(info, 'dayHigh')}\n"
@@ -773,7 +773,7 @@ class Tools:
 
         # Volatility (std deviation)
         volatility = hist['Close'].pct_change().std() * 100
-        result += f"  Volatility (σ): {volatility:.2f}%\n"
+        result += f"  Volatility (): {volatility:.2f}%\n"
 
         if __event_emitter__:
             await __event_emitter__({
@@ -1022,7 +1022,7 @@ class Tools:
         officers = info.get('companyOfficers', [])
 
         if not officers:
-            return f"ℹ No officer information available for {ticker}"
+            return f" No officer information available for {ticker}"
 
         result = f"** Company Officers: {ticker}**\n\n"
 
@@ -1497,7 +1497,7 @@ class Tools:
             await __event_emitter__({
                 "type": "status",
                 "data": {
-                    "description": f"✂ Retrieving stock split history for {ticker}",
+                    "description": f" Retrieving stock split history for {ticker}",
                     "done": False
                 }
             })
@@ -1506,7 +1506,7 @@ class Tools:
         splits = stock.splits
 
         if splits.empty:
-            return f"ℹ {ticker} has no stock split history"
+            return f" {ticker} has no stock split history"
 
         result = f"** Stock Split History: {ticker}**\n\n"
         result += f"**Total Splits:** {len(splits)}\n\n"
@@ -1557,7 +1557,7 @@ class Tools:
         actions = stock.actions
 
         if actions.empty:
-            return f"ℹ No corporate actions found for {ticker}"
+            return f" No corporate actions found for {ticker}"
 
         result = f"** Corporate Actions: {ticker}**\n\n"
         result += f"**Total Events:** {len(actions)}\n\n"
@@ -1632,7 +1632,7 @@ class Tools:
                                 "done": True
                             }
                         })
-                    return f"ℹ {ticker} is a stock. Capital gains distributions are only for ETFs/mutual funds."
+                    return f" {ticker} is a stock. Capital gains distributions are only for ETFs/mutual funds."
 
                 if __event_emitter__:
                     await __event_emitter__({
@@ -1642,7 +1642,7 @@ class Tools:
                             "done": True
                         }
                     })
-                return f"ℹ No capital gains distributions available for {ticker}"
+                return f" No capital gains distributions available for {ticker}"
 
             result = f"** Capital Gains Distributions: {ticker}**\n\n"
 
@@ -1673,7 +1673,7 @@ class Tools:
                         "done": True
                     }
                 })
-            return f"ℹ Capital gains data not available for {ticker}. This is normal for stocks (only ETFs/funds distribute capital gains)."
+            return f" Capital gains data not available for {ticker}. This is normal for stocks (only ETFs/funds distribute capital gains)."
 
     # ============================================================
     # TOOL 17-21: EARNINGS & ESTIMATES
@@ -1851,7 +1851,7 @@ class Tools:
                         result += f"  Net Income: {format_large_number(net_income)}\n"
 
             if "Annual Earnings" not in result and "Quarterly Earnings" not in result:
-                return f"ℹ No earnings data available for {ticker}"
+                return f" No earnings data available for {ticker}"
 
             return result
 
@@ -2004,7 +2004,7 @@ class Tools:
             await __event_emitter__({
                 "type": "status",
                 "data": {
-                    "description": f"⭐ Retrieving analyst recommendations for {ticker}",
+                    "description": f" Retrieving analyst recommendations for {ticker}",
                     "done": False
                 }
             })
@@ -2072,7 +2072,7 @@ class Tools:
             logger.debug(f"Could not fetch upgrades/downgrades: {e}")
 
         if not recommendation and not info.get("targetMeanPrice"):
-            result += "\nℹ No analyst recommendation data available\n"
+            result += "\n No analyst recommendation data available\n"
 
 
         if __event_emitter__:
@@ -2136,7 +2136,7 @@ class Tools:
         num_analysts = info.get("numberOfAnalystOpinions")
 
         if not any([target_low, target_mean, target_median, target_high]):
-            return f"ℹ No analyst price target data available for {ticker}"
+            return f" No analyst price target data available for {ticker}"
 
         result += "** Price Targets:**\n"
         if target_low:
@@ -2224,7 +2224,7 @@ class Tools:
             upgrades = stock.upgrades_downgrades
 
             if upgrades is None or upgrades.empty:
-                return f"ℹ No upgrades/downgrades data available for {ticker}"
+                return f" No upgrades/downgrades data available for {ticker}"
 
             result = f"** Analyst Upgrades & Downgrades: {ticker}**\n\n"
             result += f"**Total Records:** {len(upgrades)} (showing latest {min(limit, len(upgrades))})\n\n"
@@ -2242,11 +2242,11 @@ class Tools:
 
                 # Action emoji
                 if action and "up" in action.lower():
-                    emoji = "⬆"
+                    emoji = ""
                 elif action and "down" in action.lower():
-                    emoji = "⬇"
+                    emoji = ""
                 elif action and "init" in action.lower():
-                    emoji = "🆕"
+                    emoji = ""
                 elif action and "reit" in action.lower():
                     emoji = ""
                 else:
@@ -2272,7 +2272,7 @@ class Tools:
 
         except Exception as e:
             logger.warning(f"Error fetching upgrades/downgrades for {ticker}: {e}")
-            return f"ℹ Unable to fetch upgrades/downgrades for {ticker}. Data may not be available."
+            return f" Unable to fetch upgrades/downgrades for {ticker}. Data may not be available."
 
     @safe_ticker_call
     async def get_eps_trend(
@@ -2307,7 +2307,7 @@ class Tools:
             eps_trend = stock.eps_trend
 
             if eps_trend is None or (hasattr(eps_trend, 'empty') and eps_trend.empty):
-                return f"ℹ No EPS trend data available for {ticker}"
+                return f" No EPS trend data available for {ticker}"
 
             result = f"** EPS Trend: {ticker}**\n\n"
 
@@ -2346,7 +2346,7 @@ class Tools:
 
         except Exception as e:
             logger.warning(f"Error fetching EPS trend for {ticker}: {e}")
-            return f"ℹ Unable to fetch EPS trend for {ticker}. Data may not be available."
+            return f" Unable to fetch EPS trend for {ticker}. Data may not be available."
 
     @safe_ticker_call
     async def get_eps_revisions(
@@ -2381,7 +2381,7 @@ class Tools:
             eps_revisions = stock.eps_revisions
 
             if eps_revisions is None or (hasattr(eps_revisions, 'empty') and eps_revisions.empty):
-                return f"ℹ No EPS revision data available for {ticker}"
+                return f" No EPS revision data available for {ticker}"
 
             result = f"** EPS Revisions: {ticker}**\n\n"
 
@@ -2394,9 +2394,9 @@ class Tools:
                         if pd.notna(value):
                             # Format based on type
                             if "up" in str(idx).lower():
-                                emoji = "⬆"
+                                emoji = ""
                             elif "down" in str(idx).lower():
-                                emoji = "⬇"
+                                emoji = ""
                             else:
                                 emoji = ""
 
@@ -2411,7 +2411,7 @@ class Tools:
                     if isinstance(data, dict):
                         for key, value in data.items():
                             if value is not None:
-                                emoji = "⬆" if "up" in str(key).lower() else "⬇" if "down" in str(key).lower() else ""
+                                emoji = "" if "up" in str(key).lower() else "" if "down" in str(key).lower() else ""
                                 result += f"  {emoji} {key}: {value}\n"
                     result += "\n"
 
@@ -2427,7 +2427,7 @@ class Tools:
 
         except Exception as e:
             logger.warning(f"Error fetching EPS revisions for {ticker}: {e}")
-            return f"ℹ Unable to fetch EPS revisions for {ticker}. Data may not be available."
+            return f" Unable to fetch EPS revisions for {ticker}. Data may not be available."
 
     @safe_ticker_call
     async def get_earnings_calendar(
@@ -2476,7 +2476,7 @@ class Tools:
                     if div_date:
                         result += f"  Dividend Date: {format_date(div_date)}\n"
                 else:
-                    return f"ℹ No calendar data available for {ticker}"
+                    return f" No calendar data available for {ticker}"
 
             elif isinstance(calendar, dict):
                 # Earnings dates
@@ -2584,7 +2584,7 @@ class Tools:
         holders = stock.institutional_holders
 
         if holders is None or holders.empty:
-            return f"ℹ No institutional holder data available for {ticker}"
+            return f" No institutional holder data available for {ticker}"
 
         result = f"** Major Institutional Holders: {ticker}**\n\n"
 
@@ -2660,7 +2660,7 @@ class Tools:
             major_holders = stock.major_holders
 
             if major_holders is None or major_holders.empty:
-                return f"ℹ No major holders data available for {ticker}"
+                return f" No major holders data available for {ticker}"
 
             result = f"** Major Holders Summary: {ticker}**\n\n"
 
@@ -2726,7 +2726,7 @@ class Tools:
             fund_holders = stock.mutualfund_holders
 
             if fund_holders is None or fund_holders.empty:
-                return f"ℹ No mutual fund holder data available for {ticker}"
+                return f" No mutual fund holder data available for {ticker}"
 
             result = f"** Mutual Fund Holders: {ticker}**\n\n"
 
@@ -2794,7 +2794,7 @@ class Tools:
                 insiders = None
 
         if insiders is None or insiders.empty:
-            return f"ℹ No insider transaction data available for {ticker}"
+            return f" No insider transaction data available for {ticker}"
 
         result = f"** Recent Insider Transactions: {ticker}**\n\n"
 
@@ -2860,7 +2860,7 @@ class Tools:
             insiders = stock.insider_purchases
 
             if insiders is None or insiders.empty:
-                return f"ℹ No insider purchase data available for {ticker}"
+                return f" No insider purchase data available for {ticker}"
 
             result = f"** Recent Insider Purchases: {ticker}**\n\n"
 
@@ -2914,7 +2914,7 @@ class Tools:
             roster = stock.insider_roster_holders
 
             if roster is None or (hasattr(roster, 'empty') and roster.empty):
-                return f"ℹ No insider roster data available for {ticker}"
+                return f" No insider roster data available for {ticker}"
 
             result = f"** Insider Roster: {ticker}**\n\n"
 
@@ -2946,7 +2946,7 @@ class Tools:
             return result
 
         except Exception as e:
-            return f"ℹ Insider roster data not available for {ticker}"
+            return f" Insider roster data not available for {ticker}"
 
     # ============================================================
     # TOOL 29-30: OPTIONS & DERIVATIVES
@@ -2976,7 +2976,7 @@ class Tools:
             await __event_emitter__({
                 "type": "status",
                 "data": {
-                    "description": f"⛓ Retrieving options chain for {ticker}",
+                    "description": f" Retrieving options chain for {ticker}",
                     "done": False
                 }
             })
@@ -2985,7 +2985,7 @@ class Tools:
         expirations = stock.options
 
         if not expirations:
-            return f"ℹ No options data available for {ticker}"
+            return f" No options data available for {ticker}"
 
         # Use specified expiration or default to nearest
         if not expiration or expiration not in expirations:
@@ -3087,7 +3087,7 @@ class Tools:
         expirations = stock.options
 
         if not expirations:
-            return f"ℹ No options data available for {ticker}"
+            return f" No options data available for {ticker}"
 
         result = f"** Options Expirations: {ticker}**\n\n"
         result += f"**Total Expirations:** {len(expirations)}\n\n"
@@ -3175,7 +3175,7 @@ class Tools:
         if not news_data or len(news_data) == 0:
             if last_error:
                 logger.warning(f"News fetch failed after retries for {ticker}: {last_error}")
-            return f"ℹ No recent news available for {ticker}. News may not be accessible at this time. Try searching for company name instead."
+            return f" No recent news available for {ticker}. News may not be accessible at this time. Try searching for company name instead."
 
         result = f"** Recent News: {ticker}**\n\n"
         articles_displayed = 0
@@ -3261,7 +3261,7 @@ class Tools:
                 continue
 
         if articles_displayed == 0:
-            return f"ℹ News articles found for {ticker} but none had valid content. Yahoo Finance news format may have changed. Try again later."
+            return f" News articles found for {ticker} but none had valid content. Yahoo Finance news format may have changed. Try again later."
 
         if __event_emitter__:
             await __event_emitter__({
@@ -3307,7 +3307,7 @@ class Tools:
             filings = stock.sec_filings
 
             if filings is None or (hasattr(filings, 'empty') and filings.empty):
-                return f"ℹ No SEC filing data available for {ticker}"
+                return f" No SEC filing data available for {ticker}"
 
             result = f"** Recent SEC Filings: {ticker}**\n\n"
 
@@ -3331,7 +3331,7 @@ class Tools:
             return result
 
         except Exception as e:
-            return f"ℹ SEC filings not available for {ticker}"
+            return f" SEC filings not available for {ticker}"
 
     # ============================================================
     # TOOL 33-35: MARKET INDICES & COMPARISON
@@ -3370,7 +3370,7 @@ class Tools:
                 change = info.get("regularMarketChange", 0)
                 change_pct = info.get("regularMarketChangePercent", 0)
 
-                emoji = "" if change > 0 else "" if change < 0 else "➖"
+                emoji = "" if change > 0 else "" if change < 0 else ""
 
                 result += f"{emoji} **{name}** ({symbol}): "
 
@@ -3420,7 +3420,7 @@ class Tools:
             await __event_emitter__({
                 "type": "status",
                 "data": {
-                    "description": f"⚖ Comparing stocks",
+                    "description": f" Comparing stocks",
                     "done": False
                 }
             })
@@ -3563,7 +3563,7 @@ class Tools:
                 else:
                     ytd_return = None
 
-                emoji = "" if change > 0 else "" if change < 0 else "➖"
+                emoji = "" if change > 0 else "" if change < 0 else ""
 
                 sector_data.append({
                     "name": sector_name,
@@ -3638,7 +3638,7 @@ class Tools:
         # Check if this is a fund
         quote_type = info.get("quoteType", "").upper()
         if quote_type not in ["ETF", "MUTUALFUND"]:
-            return f"ℹ {ticker} does not appear to be an ETF or mutual fund. Use get_company_info for stocks."
+            return f" {ticker} does not appear to be an ETF or mutual fund. Use get_company_info for stocks."
 
         result = f"** Fund Overview: {ticker}**\n\n"
 
@@ -3790,8 +3790,8 @@ class Tools:
                 info = stock.info
                 quote_type = info.get("quoteType", "").upper()
                 if quote_type not in ["ETF", "MUTUALFUND"]:
-                    return f"ℹ {ticker} is not an ETF or mutual fund. Holdings data is only available for funds."
-                return f"ℹ Holdings data for {ticker} is not available via yfinance. Try checking the fund provider's website."
+                    return f" {ticker} is not an ETF or mutual fund. Holdings data is only available for funds."
+                return f" Holdings data for {ticker} is not available via yfinance. Try checking the fund provider's website."
 
             result = f"** Top Holdings: {ticker}**\n\n"
 
@@ -3859,7 +3859,7 @@ class Tools:
 
         except Exception as e:
             logger.warning(f"Error fetching holdings for {ticker}: {e}")
-            return f"ℹ Unable to fetch holdings data for {ticker}. This data may not be available for all funds."
+            return f" Unable to fetch holdings data for {ticker}. This data may not be available for all funds."
 
     @safe_ticker_call
     async def get_fund_sector_weights(
@@ -3894,7 +3894,7 @@ class Tools:
         # Check if this is a fund
         quote_type = info.get("quoteType", "").upper()
         if quote_type not in ["ETF", "MUTUALFUND"]:
-            return f"ℹ {ticker} is not an ETF or mutual fund. Sector weights are only available for funds."
+            return f" {ticker} is not an ETF or mutual fund. Sector weights are only available for funds."
 
         result = f"** Sector Allocation: {ticker}**\n\n"
 
@@ -3916,7 +3916,7 @@ class Tools:
                     sorted_sectors = sorted(sector_weights.items(), key=lambda x: x[1] if x[1] else 0, reverse=True)
                     for sector, weight in sorted_sectors:
                         if weight:
-                            bar = "█" * int(weight * 20) if weight < 1 else "█" * int(weight / 5)
+                            bar = "" * int(weight * 20) if weight < 1 else "" * int(weight / 5)
                             weight_pct = weight * 100 if weight < 1 else weight
                             result += f"**{sector}:** {weight_pct:.1f}% {bar}\n"
                 elif isinstance(sector_weights, pd.DataFrame):
@@ -3925,7 +3925,7 @@ class Tools:
                         weight = row.iloc[0] if len(row) > 0 else row
                         if weight:
                             weight_pct = weight * 100 if weight < 1 else weight
-                            bar = "█" * int(weight_pct / 5)
+                            bar = "" * int(weight_pct / 5)
                             result += f"**{sector}:** {weight_pct:.1f}% {bar}\n"
 
                 if __event_emitter__:
@@ -3945,15 +3945,15 @@ class Tools:
                     for sector, weight in sector_data.items():
                         if weight:
                             weight_pct = weight * 100 if weight < 1 else weight
-                            bar = "█" * int(weight_pct / 5)
+                            bar = "" * int(weight_pct / 5)
                             result += f"**{sector}:** {weight_pct:.1f}% {bar}\n"
                 return result
 
-            return f"ℹ Sector allocation data for {ticker} is not available via yfinance. Try checking the fund provider's website."
+            return f" Sector allocation data for {ticker} is not available via yfinance. Try checking the fund provider's website."
 
         except Exception as e:
             logger.warning(f"Error fetching sector weights for {ticker}: {e}")
-            return f"ℹ Unable to fetch sector weights for {ticker}. This data may not be available for all funds."
+            return f" Unable to fetch sector weights for {ticker}. This data may not be available for all funds."
 
     # ============================================================
     # TOOL 40-42: CRYPTO, FOREX & COMMODITY DATA
@@ -3993,7 +3993,7 @@ class Tools:
             await __event_emitter__({
                 "type": "status",
                 "data": {
-                    "description": f"₿ Retrieving crypto data for {ticker}",
+                    "description": f" Retrieving crypto data for {ticker}",
                     "done": False
                 }
             })
@@ -4005,7 +4005,7 @@ class Tools:
             if not info or len(info) < 3:
                 return f" No data found for cryptocurrency {symbol}. Try using format like 'BTC-USD' or 'ETH-USD'."
 
-            result = f"**₿ Cryptocurrency: {ticker}**\n\n"
+            result = f"** Cryptocurrency: {ticker}**\n\n"
 
             # Name
             name = info.get("name") or info.get("shortName") or ticker
@@ -4414,7 +4414,7 @@ class Tools:
 
         # This feature may not be available in all yfinance versions
         result = "** Trending Tickers**\n\n"
-        result += "ℹ Note: Trending tickers feature has limited availability in yfinance.\n"
+        result += " Note: Trending tickers feature has limited availability in yfinance.\n"
         result += "For the most accurate trending data, please check Yahoo Finance website directly.\n\n"
 
         # Provide some popular/most traded tickers as reference
@@ -4428,7 +4428,7 @@ class Tools:
                 price = info.get("regularMarketPrice") or info.get("currentPrice")
                 change_pct = info.get("regularMarketChangePercent", 0)
 
-                emoji = "" if change_pct > 0 else "" if change_pct < 0 else "➖"
+                emoji = "" if change_pct > 0 else "" if change_pct < 0 else ""
 
                 result += f"{emoji} {ticker_symbol}: ${price:.2f} ({change_pct:+.2f}%)\n"
             except:
@@ -4773,8 +4773,8 @@ class Tools:
         industry = info.get("industry", "N/A")
 
         # Build the beautiful output
-        header_line = "═" * 65
-        section_line = "━" * 65
+        header_line = "" * 65
+        section_line = "" * 65
 
         result = f"\n{header_line}\n"
         result += f"                    {name.upper()} ({ticker})\n"
@@ -4855,9 +4855,9 @@ class Tools:
 
         #  VALUATION SNAPSHOT
         result += f" VALUATION SNAPSHOT\n{section_line}\n"
-        result += "┌─────────────┬──────────┬─────────────────────────────────┐\n"
-        result += "│ Metric      │ Value    │ Context                         │\n"
-        result += "├─────────────┼──────────┼─────────────────────────────────┤\n"
+        result += "\n"
+        result += " Metric       Value     Context                         \n"
+        result += "\n"
 
         pe = info.get("trailingPE")
         fwd_pe = info.get("forwardPE")
@@ -4868,24 +4868,24 @@ class Tools:
 
         if pe:
             context = "Premium" if pe > 25 else "Fair value" if pe > 15 else "Value territory"
-            result += f"│ P/E Ratio   │ {pe:>8.1f}x │ {context:<31} │\n"
+            result += f" P/E Ratio    {pe:>8.1f}x  {context:<31} \n"
         if fwd_pe:
             context = "Growth expected" if fwd_pe < pe else "Earnings pressure" if pe else "Forward estimate"
-            result += f"│ Forward P/E │ {fwd_pe:>8.1f}x │ {context:<31} │\n"
+            result += f" Forward P/E  {fwd_pe:>8.1f}x  {context:<31} \n"
         if peg:
             context = ">1 growth priced in" if peg > 1 else "<1 potential value"
-            result += f"│ PEG Ratio   │ {peg:>8.2f} │ {context:<31} │\n"
+            result += f" PEG Ratio    {peg:>8.2f}  {context:<31} \n"
         if pb:
             context = "Asset-light business" if pb > 10 else "Moderate" if pb > 3 else "Asset-heavy"
-            result += f"│ P/B Ratio   │ {pb:>8.1f}x │ {context:<31} │\n"
+            result += f" P/B Ratio    {pb:>8.1f}x  {context:<31} \n"
         if ps:
             context = "Premium pricing" if ps > 5 else "Moderate" if ps > 2 else "Revenue focus"
-            result += f"│ P/S Ratio   │ {ps:>8.1f}x │ {context:<31} │\n"
+            result += f" P/S Ratio    {ps:>8.1f}x  {context:<31} \n"
         if ev_ebitda:
             context = "Above avg" if ev_ebitda > 15 else "Fair" if ev_ebitda > 10 else "Below avg"
-            result += f"│ EV/EBITDA   │ {ev_ebitda:>8.1f}x │ {context:<31} │\n"
+            result += f" EV/EBITDA    {ev_ebitda:>8.1f}x  {context:<31} \n"
 
-        result += "└─────────────┴──────────┴─────────────────────────────────┘\n\n"
+        result += "\n\n"
 
         #  FINANCIAL HEALTH
         result += f" FINANCIAL HEALTH\n{section_line}\n"
@@ -5204,7 +5204,7 @@ class Tools:
         except ImportError:
             # Fallback if pytz not available
             result = "** US Market Status**\n\n"
-            result += "ℹ Install `pytz` for accurate timezone-based market status.\n"
+            result += " Install `pytz` for accurate timezone-based market status.\n"
             result += "\n** Regular Trading Hours (ET):**\n"
             result += "  Open: 9:30 AM ET\n"
             result += "  Close: 4:00 PM ET\n"
@@ -5252,7 +5252,7 @@ class Tools:
             })
 
         result = f"** Search Results for: {query}**\n\n"
-        result += "ℹ Note: Ticker search via yfinance has limited capabilities.\n"
+        result += " Note: Ticker search via yfinance has limited capabilities.\n"
         result += "For best results, use Yahoo Finance website's search feature.\n\n"
 
         # Try a few common variations
@@ -5341,7 +5341,7 @@ class Tools:
         Returns:
             Current API usage statistics and configuration
         """
-        result = "**⚙ yfinance-ai API Status**\n\n"
+        result = "** yfinance-ai API Status**\n\n"
         result += f"**Version:** 3.0.0\n"
         result += f"**yfinance Library:** {yf.__version__}\n\n"
 
@@ -5478,7 +5478,7 @@ class Tools:
             ]
 
             if tool_name in optional_data_tools:
-                if "ℹ" in response or "No" in response:
+                if "" in response or "No" in response:
                     return True, "OK (optional data not available)"
 
             # Check for actual data presence
@@ -5760,7 +5760,7 @@ class Tools:
             ("get_historical_data", ["1y", "1d"], " Historical Data (1Y)"),
             # Dividends
             ("get_dividends", ["5y"], " Dividends"),
-            ("get_stock_splits", [], "✂ Stock Splits"),
+            ("get_stock_splits", [], " Stock Splits"),
             ("get_corporate_actions", [], " Corporate Actions"),
             ("get_capital_gains", [], " Capital Gains"),
             # Earnings
@@ -5772,9 +5772,9 @@ class Tools:
             ("get_eps_revisions", [], " EPS Revisions"),
             ("get_earnings_calendar", [], " Earnings Calendar"),
             # Analyst
-            ("get_analyst_recommendations", [], "‍ Analyst Recommendations"),
+            ("get_analyst_recommendations", [], " Analyst Recommendations"),
             ("get_analyst_price_targets", [], " Price Targets"),
-            ("get_upgrades_downgrades", [20], "⬆⬇ Upgrades/Downgrades"),
+            ("get_upgrades_downgrades", [20], " Upgrades/Downgrades"),
             # Ownership
             ("get_institutional_holders", [], " Institutional Holders"),
             ("get_major_holders", [], " Major Holders"),
@@ -5872,7 +5872,7 @@ class Tools:
             peer_list = [p.strip().upper() for p in peers.replace(" ", ",").split(",") if p.strip()]
             if peer_list:
                 result += "=" * 60 + "\n"
-                result += "## ⚖ PEER COMPARISONS\n"
+                result += "##  PEER COMPARISONS\n"
                 result += f"Comparing with: {', '.join(peer_list)}\n"
                 result += "=" * 60 + "\n\n"
 
@@ -5889,7 +5889,7 @@ class Tools:
                         })
 
                     # Stock comparison
-                    result += "### ⚖ Stock Comparison\n"
+                    result += "###  Stock Comparison\n"
                     compare_response = await self.compare_stocks(comparison_tickers)
                     result += compare_response + "\n\n"
                     functions_run += 1
