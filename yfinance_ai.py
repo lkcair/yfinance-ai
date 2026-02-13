@@ -4,7 +4,7 @@ description: Complete Financial Data Suite - 56+ tools for stocks, crypto, forex
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lucas0
-version: 3.0.3
+version: 3.0.4
 license: MIT
 requirements: yfinance>=0.2.66,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lucas0/yfinance-ai
@@ -444,7 +444,7 @@ class Tools:
         self.valves = self.Valves()
         self._call_count = 0
         self._window_start = time.time()
-        logger.info("yfinance-ai v3.0.3 initialized - 56+ financial tools ready")
+        logger.info("yfinance-ai v3.0.4 initialized - 56+ financial tools ready")
 
     def _check_rate_limit(self) -> bool:
         """Simple rate limiting check"""
@@ -5963,5 +5963,5 @@ class Tools:
 
 
 # ============================================================
-# END OF yfinance-ai v3.0.3
+# END OF yfinance-ai v3.0.4
 # ============================================================
