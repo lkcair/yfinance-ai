@@ -342,6 +342,8 @@ MIT License - Free to use, modify, and distribute
 **Project**: InvestAI
 **Made with** ❤️ **for the AI community**
 
+⚠️ DISCLAIMER: This software is for educational and research purposes only. Trading and investing involves substantial risk of loss. Use at your own risk.
+
 ---
 
 **⭐ Star the repo if you find it useful!**
