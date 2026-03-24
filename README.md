@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 # Quick Start
 
-## 🚀 OpenWebUI Automatic Installation
+## 🚀 OpenWebUI Automatic Installation (500+ Downloads)
 
 1. Download yfinance-ai on the [OpenWebUI Website](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1)
 2. Click on **Get**
@@ -57,11 +57,16 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 ---
 
-## 🔌 Integration with Other AI Tools
+## 🦞 Integration with OpenClaw (1k+ Downloads)
 
 - **OpenClaw**: Add as Skill at [https://clawhub.ai/lkcair/stocks](https://clawhub.ai/lkcair/stocks)
-- **Claude Desktop**: Add as MCP server
-- **ChatGPT Custom GPT**: Import as action
+
+---
+
+## 🔌 Integration with Other AI Tools
+
+- **Claude**: Add as skill or as MCP server
+- **ChatGPT**: Import as action or skill
 - **LangChain**: Use as Tool
 - **Python**: `from yfinance_ai import Tools; tools = Tools()`
 - **API**: Deploy as FastAPI/Flask endpoint
