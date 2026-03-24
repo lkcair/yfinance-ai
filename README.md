@@ -24,6 +24,12 @@
 
 ---
 
+
+
+https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
+
+
+
 # Quick Start
 
 ## 🚀 OpenWebUI Automatic Installation
