@@ -10,7 +10,7 @@
 
 **Github**: [Github](https://github.com/lkcair)
 
-**Version**: 3.0.3
+**Version**: 3.0.4
 
 **License**: MIT
 
@@ -157,7 +157,7 @@ This will test all 56+ functions and report results with **100% pass rate**.
 
 ---
 
-## 📊 Test Results (v3.0.3)
+## 📊 Test Results (v3.0.4)
 
 ```
 Total Tests: 53
@@ -332,7 +332,7 @@ Ask AI: "Show me Tesla's earnings"
 **File Location**: `/yfinance_ai.py`
 **Documentation**: `/README.md`
 **Built on**: yfinance, pandas, pydantic, requests
-**Status**: ✅ Production Ready (v3.0.3)
+**Status**: ✅ Production Ready (v3.0.4)
 
 ---
 
@@ -373,6 +373,6 @@ MIT License - Free to use, modify, and distribute
 
 ---
 
-*Version: 3.0.3*
+*Version: 3.0.4*
 *Status: Production Ready ✅*
 *Test Pass Rate: 100% (55/55) ✅*
