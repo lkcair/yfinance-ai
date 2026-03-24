@@ -70,6 +70,7 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 ## ✨ Features
 
+✅ **Monolithic Codebase:** single-file script that allows skill integration on OpenWebUI and OpenClaw
 ✅ **56+ financial data tools** covering every yfinance capability
 ✅ **Real-time stock prices** and quotes
 ✅ **Historical data** with customizable periods/intervals
