@@ -61,7 +61,7 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 - **Clawhub CLI**: Add as Skill with clawhub command:
     ```bash
-  # To install with npx
+  # To install with npm
   npx clawhub@latest install stocks
     
   # To install with pnpm:
