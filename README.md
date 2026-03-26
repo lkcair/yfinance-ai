@@ -6,8 +6,6 @@
 
 **Author**: lucas0
 
-**Author URL**: https://lucas0.com
-
 **Github**: [Github](https://github.com/lkcair)
 
 **Version**: 3.0.4
@@ -17,6 +15,8 @@
 **Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0, requests>=2.28.0
 
 **Repository**: https://github.com/lkcair/yfinance-ai
+
+**Author URL**: https://lucas0.com
 
 **OpenWebUI Page**: Download yfinance on the OpenWebUI Website: https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1
 
@@ -59,7 +59,11 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 ## 🦞 Integration with OpenClaw (1k+ Downloads)
 
-- **OpenClaw**: Add as Skill at [https://clawhub.ai/lkcair/stocks](https://clawhub.ai/lkcair/stocks)
+- **Clawhub CLI**: Add as Skill with clawhub command:
+    ```bash
+  clawhub install stocks
+    ```
+- **OpenClaw Manual**: Download Skill at [https://clawhub.ai/lkcair/stocks](https://clawhub.ai/lkcair/stocks) and upload manually to OpenClaw skills location.
 
 ---
 
