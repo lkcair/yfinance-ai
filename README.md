@@ -30,36 +30,23 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 
 
+# 🚀 3k+ Downloads
+# Star the Github or the Skill if you like it.
+
 # Quick Start
-
-## 🚀 OpenWebUI Automatic Installation (500+ Downloads)
-
-1. Download yfinance-ai on the [OpenWebUI Website](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1)
-2. Click on **Get**
-3. Write your OpenWebUI address for import to work.
-4. Click on **Save** inside your OpenWebUI installation.
-5. **Enable** on Model or on Chat (VERY IMPORTANT - Either enable the yfinance TOOL on the model itself via Admin Panel; or enable everytime on every new chat).
-6. Start asking questions like:
+## 🦞 (Main) Integration with OpenClaw 
+```bash
+openclaw skills install stocks
+```
+On OpenClaw, start asking questions like:
    - "What's Apple's stock price?"
    - "Compare AAPL vs MSFT"
 
-## 🚀 OpenWebUI Manual Installation
+Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 
-1. Copy the entire - [yfinance_ai.py](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) file
-2. Go to OpenWebUI → **Workspace** → **Tools**
-3. Click **"+"** to create new TOOL
-4. Paste this code
-5. Click on **Save**
-6. **Enable** on Model or on Chat (VERY IMPORTANT - Either enable the yfinance TOOL on the model itself via Admin Panel; or enable everytime on every new chat).
-7. Start asking questions like:
-   - "What's Apple's stock price?"
-   - "Compare AAPL vs MSFT"
+- **(Alternative) OpenClaw Manual**: Download Skill at [https://clawhub.ai/lkcair/stocks](https://clawhub.ai/lkcair/stocks) and upload manually to OpenClaw skills location.
 
----
-
-## 🦞 Integration with OpenClaw (1k+ Downloads)
-
-- **Clawhub CLI**: Add as Skill with clawhub command:
+- **(Obsolete versions) Clawhub CLI**: Add as Skill with clawhub command:
     ```bash
   # To install with npm
   npx clawhub@latest install stocks
@@ -70,7 +57,28 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
   # To install with bun:
   bunx clawhub@latest install stocks    
     ```
-- **OpenClaw Manual**: Download Skill at [https://clawhub.ai/lkcair/stocks](https://clawhub.ai/lkcair/stocks) and upload manually to OpenClaw skills location.
+
+## 🚀 OpenWebUI (Main) Automatic Installation
+1. Download yfinance-ai on the [OpenWebUI Website](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1)
+2. Click on **Get**
+3. Write your OpenWebUI address for import to work.
+4. Click on **Save** inside your OpenWebUI installation.
+5. **Enable** on Model or on Chat (VERY IMPORTANT - Either enable the yfinance TOOL on the model itself via Admin Panel; or enable everytime on every new chat).
+6. Start asking questions like:
+   - "What's Apple's stock price?"
+   - "Compare AAPL vs MSFT"
+
+## 🚀 OpenWebUI (Alternative) Manual Installation
+
+1. Copy the entire - [yfinance_ai.py](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) file
+2. Go to OpenWebUI → **Workspace** → **Tools**
+3. Click **"+"** to create new TOOL
+4. Paste this code
+5. Click on **Save**
+6. **Enable** on Model or on Chat (VERY IMPORTANT - Either enable the yfinance TOOL on the model itself via Admin Panel; or enable everytime on every new chat).
+7. Start asking questions like:
+   - "What's Apple's stock price?"
+   - "Compare AAPL vs MSFT"
 
 ---
 
@@ -87,34 +95,61 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 ## ✨ Features
 
 ✅ **Monolithic Codebase:** single-file script that allows skill integration on OpenWebUI and OpenClaw
+
 ✅ **56+ financial data tools** covering every yfinance capability
+
 ✅ **Real-time stock prices** and quotes
+
 ✅ **Historical data** with customizable periods/intervals
+
 ✅ **Financial statements** (income, balance sheet, cash flow)
+
 ✅ **Key ratios** and valuation metrics
+
 ✅ **Dividends, splits**, and corporate actions
+
 ✅ **Analyst recommendations** and price targets
+
 ✅ **Institutional and insider** holdings
+
 ✅ **Options chains** and derivatives data
+
 ✅ **Company news** and SEC filings
+
 ✅ **Market indices** and sector performance
+
 ✅ **Bulk operations** and stock comparison
+
 ✅ **Built-in testing** function for validation
+
 ✅ **Comprehensive error handling**
+
 ✅ **Rate limiting** protection
+
 ✅ **Natural language** query support
+
 
 ### 🆕 New in v3.0.0
 ✅ **Cryptocurrency prices** - BTC, ETH, any crypto (BTC-USD format)
+
 ✅ **Forex rates** - EUR/USD, GBP/USD, any currency pair
+
 ✅ **Commodities** - Gold, Oil, Silver, Natural Gas futures
+
 ✅ **Fund/ETF data** - Holdings, sector weights, expense ratios
+
 ✅ **Analyst price targets** - Low, mean, median, high targets
+
 ✅ **Upgrades/Downgrades** - Analyst rating changes with dates
+
 ✅ **EPS trends & revisions** - Earnings estimate changes
+
 ✅ **Peer comparison** - Compare stocks in same sector
+
 ✅ **Financial summary** - One-call comprehensive overview
+
 ✅ **Historical comparison** - Multi-ticker performance analysis
+
 ✅ **Market status** - Check if markets are open
 
 ---
@@ -297,32 +332,6 @@ All 56+ tools are fully operational!
 
 ### Testing (1 tool)
 - run_self_test - Run comprehensive self-test
-
----
-
-## 🚦 OpenWebUI installation
-
-### Step 1: Get the File
-```bash
-cat /yfinance_ai.py
-```
-
-### Step 2: Install in OpenWebUI
-1. Copy the file contents
-2. OpenWebUI → Workspace → Tools → "+"
-3. Paste → Save and Enable
-
-### Step 3: Test It
-```
-Ask AI: "Run self-test on yfinance tools"
-```
-
-### Step 4: Start Using
-```
-Ask AI: "What's Apple's stock price?"
-Ask AI: "Compare AAPL, MSFT, and GOOGL"
-Ask AI: "Show me Tesla's earnings"
-```
 
 ---
 
