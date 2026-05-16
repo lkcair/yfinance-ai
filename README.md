@@ -32,6 +32,9 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
 # 🚀 3k+ Downloads
 # Star the Github or the Skill if you like it.
+**Repository**: https://github.com/lkcair/yfinance-ai
+
+Also, try [SEC-ai](https://github.com/lkcair/sec-finance-ai) for SEC data.
 
 # Quick Start
 ## 🦞 (Main) Integration with OpenClaw 
