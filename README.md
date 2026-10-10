@@ -39,7 +39,7 @@ Also, try [SEC-ai](https://github.com/lkcair/sec-finance-ai) for SEC data.
 # Quick Start
 ## 🦞 (Main) Integration with OpenClaw 
 ```bash
-openclaw skills install stocks
+openclaw skills install @lkcair/stocks
 ```
 On OpenClaw, start asking questions like:
    - "What's Apple's stock price?"
