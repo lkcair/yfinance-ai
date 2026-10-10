@@ -2,7 +2,7 @@
 
 ### World's Best AI-Powered Yahoo Finance Integration
 
-**Natural Language Financial Data** - Fetch real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 56+ financial tools for seamless integration with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+**Natural Language Financial Data** - Fetch real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 68 financial tools for seamless integration with OpenWebUI, Claude, ChatGPT, and any AI assistant.
 
 **Author**: lucas0
 
@@ -99,7 +99,7 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 
 ✅ **Monolithic Codebase:** single-file script that allows skill integration on OpenWebUI and OpenClaw
 
-✅ **56+ financial data tools** covering every yfinance capability
+✅ **68 financial data tools** covering every yfinance capability (yfinance 1.7)
 
 ✅ **Real-time stock prices** and quotes
 
@@ -131,6 +131,28 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 
 ✅ **Natural language** query support
 
+
+### 🆕 New in v4.3
+
+✅ **Market movers** - Day gainers, losers, most active, most shorted, undervalued and more
+
+✅ **Market summary** - Open/closed status (holiday-aware) and headline indices for US, Europe, Asia
+
+✅ **Sectors and industries** - Largest companies, top performers, growth leaders, sector ETFs
+
+✅ **Calendars** - Market-wide earnings, IPOs, economic events (CPI, jobs, rates) and splits
+
+✅ **Valuation history** - P/E, PEG, P/S, P/B, EV/EBITDA by quarter
+
+✅ **TTM financials** - Trailing-twelve-month revenue, profit, EBITDA and cash flow
+
+✅ **Shares history** - Buybacks and dilution over time
+
+✅ **Real analyst estimates** - EPS and revenue (avg, low, high, growth, analyst count) for quarters and years
+
+✅ **Ticker search** - Find symbols by company name
+
+✅ **Fixed percentages** - Margins, ROE and growth now display correctly
 
 ### 🆕 New in v3.0.0
 ✅ **Cryptocurrency prices** - BTC, ETH, any crypto (BTC-USD format)
@@ -187,6 +209,14 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 - "QQQ sector allocation"
 - "VOO expense ratio"
 
+### Market-Wide (New in v4.3)
+- "Top gainers today"
+- "Who reports earnings this week?"
+- "Upcoming IPOs"
+- "Economic calendar for this week"
+- "Semiconductor industry top performers"
+- "Is Apple buying back shares?"
+
 ### Analyst Data (New!)
 - "NVIDIA analyst price targets"
 - "Tesla upgrades and downgrades"
@@ -202,19 +232,19 @@ AI can self-test by asking:
 "Run self-test on yfinance tools"
 ```
 
-This will test all 56+ functions and report results with **100% pass rate**.
+This runs 64 checks across all 68 functions and reports results with **100% pass rate**.
 
 ---
 
 ## 📊 Test Results (v3.0.4)
 
 ```
-Total Tests: 53
-Passed: 53 ✅
+Total Tests: 64
+Passed: 64 ✅
 Failed: 0 ❌
 Success Rate: 100.0%
 
-All 56+ tools are fully operational!
+All 68 tools are fully operational!
 ```
 
 ### Test Categories (All 16 Passing):
@@ -237,111 +267,114 @@ All 56+ tools are fully operational!
 
 ---
 
-## 🛠️ Available Tools (56+)
+## 🛠️ Available Tools (68)
 
-### Stock Data (5 tools)
-- get_stock_price - Get current stock price
-- get_fast_info - Get fast access to key stock metrics
-- get_stock_quote - Get detailed real-time quote
-- get_historical_data - Get historical price data
-- get_isin - Get ISIN identifier
 
-### Company Info (2 tools)
-- get_company_info - Get company profile and details
-- get_company_officers - Get company officers and executives
+### Quotes and history (6 tools)
+- get_stock_price - Get current stock price and key metrics for a ticker symbol
+- get_stock_quote - Get detailed quote with bid/ask, day range, and trading info
+- get_fast_info - Get fast-access ticker information (lightweight, quick response)
+- get_historical_data - Get historical price data for a stock
+- get_historical_price_on_date - Get historical price for a specific date
+- download_multiple_tickers - Download historical data for multiple tickers at once (bulk operation)
 
-### Financials (3 tools)
-- get_income_statement - Get income statement
-- get_balance_sheet - Get balance sheet
-- get_cash_flow - Get cash flow statement
+### Company (4 tools)
+- get_company_info - Get detailed company information and business description
+- get_company_overview - Get a beautiful, insightful company overview with context for every metric
+- get_company_officers - Get company officers and key management
+- get_isin - Get International Securities Identification Number (ISIN) for a ticker
 
-### Analysis (5 tools)
-- get_key_ratios - Get key financial ratios
-- get_analyst_recommendations - Get analyst recommendations
-- get_analyst_estimates - Get analyst estimates
-- get_growth_estimates - Get growth estimates
-- get_earnings_dates - Get earnings calendar dates
+### Financials (8 tools)
+- get_income_statement - Get income statement data
+- get_balance_sheet - Get balance sheet data
+- get_cash_flow - Get cash flow statement data
+- get_ttm_financials - Get trailing-twelve-month (TTM) income statement and cash flow
+- get_key_ratios - Get key financial ratios and valuation metrics
+- get_valuation_history - Get valuation measures now and for the last quarters (market cap, EV, P/E, PEG, P/S, P/B, EV/EBITDA)
+- get_financial_summary - Get a comprehensive one-page financial summary of a stock
+- get_shares_history - Get shares outstanding over time (dilution or buybacks)
 
-### Ownership (6 tools)
-- get_institutional_holders - Get institutional holders
-- get_major_holders - Get major shareholders
+### Earnings and estimates (7 tools)
+- get_earnings_dates - Get upcoming and past earnings dates with estimates
+- get_earnings_history - Get historical earnings data with annual and quarterly figures
+- get_earnings_calendar - Get earnings calendar including next earnings date and dividend dates
+- get_analyst_estimates - Get analyst estimates for earnings, revenue, and EPS
+- get_growth_estimates - Get analyst growth estimates
+- get_eps_trend - Get EPS (Earnings Per Share) trend data showing how estimates have changed
+- get_eps_revisions - Get EPS revision data showing analyst estimate changes
+
+### Analysts (3 tools)
+- get_analyst_recommendations - Get analyst recommendations and ratings
+- get_analyst_price_targets - Get detailed analyst price targets for a stock
+- get_upgrades_downgrades - Get detailed analyst upgrades and downgrades history
+
+### Holders and insiders (6 tools)
+- get_institutional_holders - Get major institutional holders and their ownership
+- get_major_holders - Get major holders summary (institutions, insiders, public float)
 - get_mutualfund_holders - Get mutual fund holders
-- get_insider_transactions - Get insider transactions
-- get_insider_purchases - Get insider purchases
-- get_insider_roster_holders - Get insider roster
+- get_insider_transactions - Get recent insider trading activity
+- get_insider_purchases - Get insider purchases only (filtered for buys)
+- get_insider_roster_holders - Get insider roster (list of company insiders)
+
+### Dividends and actions (4 tools)
+- get_dividends - Get dividend payment history and current metrics
+- get_stock_splits - Get stock split history
+- get_corporate_actions - Get all corporate actions (dividends + splits combined)
+- get_capital_gains - Get capital gains distributions (primarily for funds/ETFs)
 
 ### Options (2 tools)
-- get_options_chain - Get options chain data
-- get_options_expirations - Get options expiration dates
+- get_options_chain - Get options chain data (calls and puts)
+- get_options_expirations - Get all available options expiration dates
 
-### Market Data (3 tools)
-- get_market_indices - Get major market indices
-- compare_stocks - Compare multiple stocks
-- get_sector_performance - Get sector performance data
+### Market-wide (8 tools)
+- get_market_status - Check if US stock markets are currently open
+- get_market_summary - Get a market overview for a region: open/closed status plus main indices, futures, bonds and FX
+- get_market_indices - Get current prices for major market indices
+- get_market_movers - Get today's market movers from Yahoo Finance screeners
+- get_trending_tickers - Get today's most active (trending) US tickers
+- get_sector_performance - Get performance of major market sectors
+- get_sector_overview - Get a sector overview: size, weight, largest companies, industries and sector ETFs
+- get_industry_overview - Get an industry overview: largest, best-performing and fastest-growing companies
 
-### Dividends & Splits (4 tools)
-- get_dividends - Get dividend history
-- get_splits - Get stock split history
-- get_capital_gains - Get capital gains distributions
-- get_actions - Get all corporate actions
+### Calendars (4 tools)
+- get_upcoming_earnings - Get the market-wide earnings calendar (which companies report in the next N days)
+- get_ipo_calendar - Get upcoming IPOs (exchange, expected date, price range, shares)
+- get_economic_calendar - Get upcoming economic events (CPI, jobs, GDP, rate decisions) with expected and prior values
+- get_splits_calendar - Get upcoming stock splits
 
-### Earnings History (4 tools)
-- get_earnings - Get earnings history
-- get_quarterly_earnings - Get quarterly earnings
-- get_earnings_history - Get earnings history with estimates
-- get_revenue_estimates - Get revenue estimates
+### Funds and ETFs (3 tools)
+- get_fund_overview - Get overview data for an ETF or mutual fund
+- get_fund_holdings - Get top holdings for an ETF or mutual fund
+- get_fund_sector_weights - Get sector allocation/weights for an ETF or mutual fund
 
-### News & Filings (2 tools)
-- get_stock_news - Get latest news articles
-- get_sec_filings - Get SEC filings
+### Crypto, forex, commodities (3 tools)
+- get_crypto_price - Get cryptocurrency price and market data
+- get_forex_rate - Get foreign exchange (forex) rate for a currency pair
+- get_commodity_price - Get commodity/futures price data
 
-### Bulk Operations (2 tools)
-- get_multiple_quotes - Get quotes for multiple tickers
-- compare_fundamentals - Compare fundamentals across stocks
+### Compare (4 tools)
+- compare_stocks - Compare key metrics across multiple stocks
+- get_peer_comparison - Compare a stock with its peers on key metrics
+- get_historical_comparison - Compare historical price performance of multiple stocks
+- get_complete_analysis - Run a complete analysis of a stock by calling ALL available functions
 
-### Utilities (3 tools)
-- get_stock_info - Get comprehensive stock information
-- get_calendar - Get upcoming events calendar
-- validate_ticker - Validate ticker symbol
+### News and filings (2 tools)
+- get_stock_news - Get recent news articles about a stock
+- get_sec_filings - Get recent SEC filings (10-K, 10-Q, 8-K, etc.)
 
-### Analyst Data (3 tools) 🆕
-- get_analyst_price_targets - Get analyst price targets (low, mean, median, high)
-- get_upgrades_downgrades - Get recent analyst upgrades/downgrades
-- get_eps_trend - Get EPS trend data
-
-### Earnings & Estimates (3 new tools) 🆕
-- get_eps_revisions - Get EPS revision data
-- get_earnings_calendar - Get earnings calendar and dates
-
-### Fund/ETF Data (3 tools) 🆕
-- get_fund_overview - Get ETF/mutual fund overview
-- get_fund_holdings - Get top holdings for funds
-- get_fund_sector_weights - Get sector allocation for funds
-
-### Crypto, Forex & Commodities (3 tools) 🆕
-- get_crypto_price - Get cryptocurrency prices (BTC, ETH, etc.)
-- get_forex_rate - Get forex exchange rates (EUR/USD, etc.)
-- get_commodity_price - Get commodity prices (gold, oil, etc.)
-
-### Analysis & Comparison (4 tools) 🆕
-- get_peer_comparison - Compare stock with sector peers
-- get_financial_summary - Get comprehensive financial summary
-- get_historical_comparison - Compare historical performance
-- get_market_status - Check if markets are open
-
-### Comprehensive Analysis (2 tools) 🆕
-- get_company_overview - Beautiful, insightful company overview with context
-- get_complete_analysis - Run ALL functions for complete analysis (AI provides peers)
-
-### Testing (1 tool)
-- run_self_test - Run comprehensive self-test
+### Utility (4 tools)
+- search_ticker - Search for ticker symbols by company name or keyword
+- validate_ticker - Validate if a ticker symbol exists and is tradeable
+- get_api_status - Get API status and usage information
+- run_self_test - Run comprehensive self-test of all 55+ yfinance-ai tools
 
 ---
+
 
 ## 🎯 What Makes This Special
 
 🌟 **World's Best** - Most comprehensive AI-powered Yahoo Finance integration
-📊 **Complete Coverage** - 56+ tools covering stocks, crypto, forex, commodities, ETFs
+📊 **Complete Coverage** - 68 tools covering stocks, crypto, forex, commodities, ETFs
 🚀 **Production Ready** - Full error handling, retry logic, validation, testing
 📄 **Single File** - Everything in one ~150 KB file
 🔌 **Multi-Platform** - Works with OpenWebUI, Claude, ChatGPT, LangChain
