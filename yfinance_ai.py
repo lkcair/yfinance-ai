@@ -1,28 +1,25 @@
 """
-title: yfinance-ai - World's Best AI-Powered Yahoo Finance Integration
-description: Complete Financial Data Suite - 68 tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+title: yfinance-ai - World's First AI-Powered Yahoo Finance Integration
+description: Complete Financial Data Suite - 68 tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, OpenClaw, and any AI assistant with function calling.
 author: lucas0
 author_url: https://lucas0.com
-funding_url: https://github.com/sponsors/lucas0
-version: 4.3.1
+funding_url: https://github.com/sponsors/lkcair
+version: 5.0.0
 license: MIT
 requirements: yfinance>=1.7.0,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
-repository: https://github.com/lucas0/yfinance-ai
+repository: https://github.com/lkcair/yfinance-ai
 
 OPENWEBUI INSTALLATION:
 1. Copy this entire file
-2. Go to OpenWebUI  Admin Panel  Functions
-3. Click "+" to create new function
-4. Paste this code
-5. Save and enable
+2. Go to OpenWebUI > Workspace > Tools
+3. Click "+" to create a new tool
+4. Paste this code and click Save
+5. Enable the tool on the model or in the chat
 6. Start asking questions like "What's Apple's stock price?" or "Get Bitcoin price"
 
-INTEGRATION WITH OTHER AI TOOLS:
-- Claude Desktop: Add as MCP server
-- ChatGPT Custom GPT: Import as action
-- LangChain: Use as Tool
-- Python: from yfinance_ai import Tools; tools = Tools()
-- API: Deploy as FastAPI/Flask endpoint
+OTHER WAYS TO USE IT:
+- OpenClaw: openclaw skills install @lkcair/stocks
+- Python: from yfinance_ai import Tools; tools = Tools()  (every tool is an async method)
 
 FEATURES:
  68 financial data tools - the most comprehensive yfinance integration
@@ -66,7 +63,7 @@ EXAMPLE PROMPTS FOR AI:
 
 TESTING:
 AI can self-test by asking: "Run self-test on yfinance tools"
-This will test all 56+ functions and report results.
+This runs 64 checks across the tools and reports pass/fail with sample data.
 """
 
 from typing import Callable, Any, Optional, List, Dict, Union
@@ -388,14 +385,14 @@ def format_date(timestamp: Union[int, float, datetime, None]) -> str:
 
 
 # ============================================================
-# MAIN TOOLS CLASS - 50+ FINANCIAL DATA TOOLS
+# MAIN TOOLS CLASS - 68 FINANCIAL DATA TOOLS
 # ============================================================
 
 class Tools:
     """
      yfinance-ai: World's First AI-Powered Yahoo Finance Integration
 
-    Natural Language Financial Data Access - 50+ Tools for AI Assistants
+    Natural Language Financial Data Access - 68 Tools for AI Assistants
 
     This class provides comprehensive access to Yahoo Finance data through
     natural language queries. Perfect for OpenWebUI, Claude, ChatGPT, and
@@ -413,7 +410,7 @@ class Tools:
     - Built-in self-testing capabilities
 
     Author: lucas0 (https://lucas0.com)
-    Repository: https://github.com/lucas0/yfinance-ai
+    Repository: https://github.com/lkcair/yfinance-ai
     License: MIT
     """
 
@@ -449,7 +446,7 @@ class Tools:
         self.valves = self.Valves()
         self._call_count = 0
         self._window_start = time.time()
-        logger.info("yfinance-ai v3.0.4 initialized - 56+ financial tools ready")
+        logger.info("yfinance-ai initialized - 68 financial tools ready")
 
     def _check_rate_limit(self) -> bool:
         """Simple rate limiting check"""
@@ -4542,7 +4539,7 @@ class Tools:
         for d in comparison_data:
             mc = format_large_number(d['market_cap']) if d['market_cap'] else "N/A"
             beta = f"{d['beta']:.2f}" if d['beta'] else "N/A"
-            div = f"{d['div_yield']*100:.1f}%" if d['div_yield'] else "N/A"
+            div = format_percentage(d['div_yield'], 1, already_percent=True) if d['div_yield'] else "N/A"
             result += f"{d['ticker']:<8} {mc:>12} {beta:>8} {div:>10}\n"
 
         result += "```\n"
@@ -4665,7 +4662,7 @@ class Tools:
             if div_rate:
                 result += f"  Annual Dividend: ${div_rate:.2f}\n"
             if div_yield:
-                result += f"  Dividend Yield: {div_yield*100:.2f}%\n"
+                result += f"  Dividend Yield: {format_percentage(div_yield, already_percent=True)}\n"
             payout = info.get("payoutRatio")
             if payout:
                 result += f"  Payout Ratio: {payout*100:.1f}%\n"
@@ -4920,7 +4917,7 @@ class Tools:
         ex_div = info.get("exDividendDate")
 
         if div_yield or div_rate:
-            yield_str = f"{div_yield*100:.2f}%" if div_yield else "N/A"
+            yield_str = format_percentage(div_yield, already_percent=True) if div_yield else "N/A"
             rate_str = f"${div_rate:.2f}/share" if div_rate else "N/A"
             result += f"Dividend Yield:   {yield_str:<15} Annual Dividend: {rate_str}\n"
 
@@ -5663,7 +5660,6 @@ class Tools:
             Current API usage statistics and configuration
         """
         result = "** yfinance-ai API Status**\n\n"
-        result += f"**Version:** 3.0.0\n"
         result += f"**yfinance Library:** {yf.__version__}\n\n"
 
         result += "**Rate Limiting:**\n"
@@ -5676,7 +5672,7 @@ class Tools:
         result += f"  Max News Items: {self.valves.max_news_items}\n"
         result += f"  Max Comparison Tickers: {self.valves.max_comparison_tickers}\n\n"
 
-        result += "**Available Methods:** 56+ financial data tools\n"
+        result += "**Available Methods:** 68 financial data tools\n"
         result += "**Status:**  Operational\n"
 
         return result
@@ -5691,7 +5687,7 @@ class Tools:
         __event_emitter__: Callable[[dict], Any] = None
     ) -> str:
         """
-         Run comprehensive self-test of all 55+ yfinance-ai tools.
+         Run comprehensive self-test of the yfinance-ai tools (64 checks).
 
         This function is designed to be called by AI assistants to verify
         that all tools are working correctly. It tests each tool category,
@@ -5719,8 +5715,7 @@ class Tools:
 
         result = "** yfinance-ai Self-Test Report**\n\n"
         result += f"**Test Ticker:** {ticker} (S&P 500 ETF - chosen for comprehensive data coverage)\n"
-        result += f"**Test Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        result += f"**Version:** 3.0.1\n\n"
+        result += f"**Test Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
         result += "="*60 + "\n\n"
 
         test_results = {}
@@ -6299,5 +6294,5 @@ class Tools:
 
 
 # ============================================================
-# END OF yfinance-ai v3.0.4
+# END OF yfinance-ai
 # ============================================================

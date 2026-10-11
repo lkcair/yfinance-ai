@@ -1,14 +1,12 @@
 # yfinance-ai
 
-### World's Best AI-Powered Yahoo Finance Integration
+### World's First AI-Powered Yahoo Finance Integration
 
-**Natural Language Financial Data** - Fetch real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 68 financial tools for seamless integration with OpenWebUI, Claude, ChatGPT, and any AI assistant.
+**Natural Language Financial Data** - Fetch real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, news, and everything yfinance offers via simple AI prompts. 68 financial tools for OpenWebUI, OpenClaw, and any AI assistant with function calling.
 
 **Author**: lucas0
 
 **Github**: [Github](https://github.com/lkcair)
-
-**Version**: 4.3.1
 
 **License**: MIT
 
@@ -85,13 +83,10 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 
 ---
 
-## 🔌 Integration with Other AI Tools
+## 🔌 Other Ways to Use It
 
-- **Claude**: Add as skill or as MCP server
-- **ChatGPT**: Import as action or skill
-- **LangChain**: Use as Tool
-- **Python**: `from yfinance_ai import Tools; tools = Tools()`
-- **API**: Deploy as FastAPI/Flask endpoint
+- **OpenClaw**: `openclaw skills install @lkcair/stocks`
+- **Python**: `from yfinance_ai import Tools; tools = Tools()` (every tool is an async method)
 
 ---
 
@@ -99,7 +94,7 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 
 ✅ **Monolithic Codebase:** single-file script that allows skill integration on OpenWebUI and OpenClaw
 
-✅ **68 financial data tools** covering every yfinance capability (yfinance 1.7)
+✅ **68 financial data tools** built on yfinance 1.7
 
 ✅ **Real-time stock prices** and quotes
 
@@ -132,7 +127,7 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 ✅ **Natural language** query support
 
 
-### 🆕 New in v4.3
+### 🆕 Market-wide, valuation and estimates
 
 ✅ **Market movers** - Day gainers, losers, most active, most shorted, undervalued and more
 
@@ -154,7 +149,7 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 
 ✅ **Fixed percentages** - Margins, ROE and growth now display correctly
 
-### 🆕 New in v3.0.0
+### 🌍 Multi-asset, funds and analyst data
 ✅ **Cryptocurrency prices** - BTC, ETH, any crypto (BTC-USD format)
 
 ✅ **Forex rates** - EUR/USD, GBP/USD, any currency pair
@@ -197,19 +192,19 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 - "Compare tech sector vs healthcare sector"
 - "Show me the major market indices"
 
-### Crypto, Forex & Commodities (New!)
+### Crypto, Forex & Commodities
 - "Get Bitcoin price"
 - "What's Ethereum trading at?"
 - "EUR/USD exchange rate"
 - "Gold price today"
 - "Oil futures price"
 
-### Fund/ETF Queries (New!)
+### Fund/ETF Queries
 - "SPY top holdings"
 - "QQQ sector allocation"
 - "VOO expense ratio"
 
-### Market-Wide (New in v4.3)
+### Market-Wide
 - "Top gainers today"
 - "Who reports earnings this week?"
 - "Upcoming IPOs"
@@ -217,7 +212,7 @@ Skill page: [Openclaw Stocks](https://clawhub.ai/lkcair/stocks)
 - "Semiconductor industry top performers"
 - "Is Apple buying back shares?"
 
-### Analyst Data (New!)
+### Analyst Data
 - "NVIDIA analyst price targets"
 - "Tesla upgrades and downgrades"
 - "Apple EPS trend"
@@ -233,37 +228,6 @@ AI can self-test by asking:
 ```
 
 This runs 64 checks across all 68 functions and reports results with **100% pass rate**.
-
----
-
-## 📊 Test Results (v3.0.4)
-
-```
-Total Tests: 64
-Passed: 64 ✅
-Failed: 0 ❌
-Success Rate: 100.0%
-
-All 68 tools are fully operational!
-```
-
-### Test Categories (All 16 Passing):
-- ✅ Stock Quotes & Prices (5/5)
-- ✅ Company Information (2/2)
-- ✅ Financial Statements (3/3)
-- ✅ Key Ratios & Metrics (1/1)
-- ✅ Dividends & Corporate Actions (4/4)
-- ✅ Earnings & Estimates (7/7)
-- ✅ Analyst Data (3/3)
-- ✅ Institutional & Insider Data (6/6)
-- ✅ Options & Derivatives (2/2)
-- ✅ News & SEC Filings (2/2)
-- ✅ Market Indices & Comparison (3/3)
-- ✅ Fund/ETF Data (3/3)
-- ✅ Crypto, Forex & Commodities (3/3)
-- ✅ Analysis & Comparison (4/4)
-- ✅ Bulk Operations (2/2)
-- ✅ Utility Functions (3/3)
 
 ---
 
@@ -366,20 +330,20 @@ All 68 tools are fully operational!
 - search_ticker - Search for ticker symbols by company name or keyword
 - validate_ticker - Validate if a ticker symbol exists and is tradeable
 - get_api_status - Get API status and usage information
-- run_self_test - Run comprehensive self-test of all 55+ yfinance-ai tools
+- run_self_test - Run comprehensive self-test of the yfinance-ai tools (64 checks)
 
 ---
 
 
 ## 🎯 What Makes This Special
 
-🌟 **World's Best** - Most comprehensive AI-powered Yahoo Finance integration
+🌟 **World's First** - The first AI-powered Yahoo Finance integration, and the most complete one
 📊 **Complete Coverage** - 68 tools covering stocks, crypto, forex, commodities, ETFs
 🚀 **Production Ready** - Full error handling, retry logic, validation, testing
-📄 **Single File** - Everything in one ~150 KB file
-🔌 **Multi-Platform** - Works with OpenWebUI, Claude, ChatGPT, LangChain
+📄 **Single File** - Everything in one ~230 KB file
+🔌 **Multi-Platform** - Works with OpenWebUI, OpenClaw and plain Python
 📚 **Well Documented** - Comprehensive guides and examples
-✅ **100% Tested** - All 55 tests pass comprehensive self-test
+✅ **100% Tested** - All 64 self-test checks pass
 
 ---
 
@@ -388,18 +352,7 @@ All 68 tools are fully operational!
 **File Location**: `/yfinance_ai.py`
 **Documentation**: `/README.md`
 **Built on**: yfinance, pandas, pydantic, requests
-**Status**: ✅ Production Ready (v4.3.1)
-
----
-
-## 🏆 What's New in v3.0.0
-
-✅ **15 new tools** - Crypto, forex, commodities, funds, analyst data, analysis
-✅ **Fixed yfinance 0.2.66+ compatibility** - Works with latest yfinance
-✅ **Added retry logic** - Exponential backoff for network resilience
-✅ **Improved news function** - Multiple fallback parsing strategies
-✅ **Natural language support** - "gold" → GC=F, "bitcoin" → BTC-USD
-✅ **100% test pass rate** - All 54 tests passing
+**Status**: ✅ Production Ready
 
 ---
 
@@ -414,7 +367,7 @@ MIT License - Free to use, modify, and distribute
 **Built with**:
 - [yfinance](https://github.com/ranaroussi/yfinance) by ranaroussi
 - pandas, pydantic
-- OpenWebUI function framework
+- OpenWebUI tool framework
 
 **Author**: lucas0 (https://lucas0.com)
 **Project**: InvestAI
@@ -429,6 +382,5 @@ MIT License - Free to use, modify, and distribute
 
 ---
 
-*Version: 4.3.1*
 *Status: Production Ready ✅*
-*Test Pass Rate: 100% (55/55) ✅*
+*Test Pass Rate: 100% (64/64) ✅*
