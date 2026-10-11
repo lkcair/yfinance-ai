@@ -8,11 +8,11 @@
 
 **Github**: [Github](https://github.com/lkcair)
 
-**Version**: 3.0.4
+**Version**: 4.3.1
 
 **License**: MIT
 
-**Requirements**: yfinance>=0.2.66, pandas>=2.2.0, pydantic>=2.0.0, requests>=2.28.0
+**Requirements**: yfinance>=1.7.0, pandas>=2.2.0, pydantic>=2.0.0, requests>=2.28.0
 
 **Repository**: https://github.com/lkcair/yfinance-ai
 
@@ -388,7 +388,7 @@ All 68 tools are fully operational!
 **File Location**: `/yfinance_ai.py`
 **Documentation**: `/README.md`
 **Built on**: yfinance, pandas, pydantic, requests
-**Status**: ✅ Production Ready (v3.0.4)
+**Status**: ✅ Production Ready (v4.3.1)
 
 ---
 
@@ -429,6 +429,6 @@ MIT License - Free to use, modify, and distribute
 
 ---
 
-*Version: 3.0.4*
+*Version: 4.3.1*
 *Status: Production Ready ✅*
 *Test Pass Rate: 100% (55/55) ✅*
