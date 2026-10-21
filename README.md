@@ -11,18 +11,13 @@ Prices and history, financial statements, ratios and valuation history, analyst 
 | OpenWebUI, as a tool (thousands of downloads) | [Get it on openwebui.com](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1) | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
 | Python | `from yfinance_ai import Tools` | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
 
-## How it fits together
+## Files
 
-[`yfinance_ai.py`](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) is the whole toolkit: one file with a `Tools` class of async methods. Every platform runs that same file.
+`yfinance_ai.py` holds all 68 tools. The same file is used everywhere:
 
-```
-yfinance_ai.py
-├── OpenWebUI   the file itself, added as a tool
-├── ClawHub     skill folder: SKILL.md, scripts/cli.py, scripts/yfinance_ai.py
-└── MCP         PyPI package yfinance-ai: yfinance_ai.py and yfinance_ai_mcp.py
-```
-
-In the skill, `cli.py` runs one function per command and `SKILL.md` tells the agent which function fits each question. In the MCP server, `yfinance_ai_mcp.py` registers every method as an MCP tool, with its parameters documented.
+- OpenWebUI: paste [`yfinance_ai.py`](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) as a tool.
+- ClawHub skill: `scripts/yfinance_ai.py`, run by `scripts/cli.py`, with `SKILL.md` for the agent.
+- MCP: the `yfinance-ai` package on PyPI, `yfinance_ai.py` plus `yfinance_ai_mcp.py`.
 
 https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
