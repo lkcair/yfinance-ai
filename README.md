@@ -39,7 +39,7 @@ claude mcp add yfinance-ai -- uvx yfinance-ai
 
 Without uv: `pip install yfinance-ai`, then use `"command": "yfinance-ai"` with no args.
 
-All 68 tools are exposed, each marked read-only. Listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.lkcair/yfinance-ai`. MCP server source: [lkcair/finance-ai-mcp](https://github.com/lkcair/finance-ai-mcp/tree/main/yfinance-ai).
+All 68 tools are exposed, each marked read-only. Listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.lkcair/yfinance-ai`. MCP server source: [lkcair/yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp).
 
 ## 🦞 OpenClaw (ClawHub)
 
