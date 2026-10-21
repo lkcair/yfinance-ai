@@ -4,7 +4,7 @@
 
 **68 financial data tools** for any AI assistant: real-time stock prices, crypto, forex, commodities, ETFs, fundamentals, dividends, analyst ratings, options, holders, calendars, news and everything yfinance offers, through plain-language questions.
 
-Use it as an **MCP server** (Claude, Cursor, VS Code and any MCP client), an **OpenClaw skill** or an **OpenWebUI tool**. Thousands of downloads on ClawHub and on OpenWebUI.
+Use it as an **MCP server** (Claude, Cursor, VS Code and any MCP client), an **OpenClaw skill** or an **OpenWebUI tool**.
 
 [![PyPI](https://img.shields.io/pypi/v/yfinance-ai)](https://pypi.org/project/yfinance-ai/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -13,6 +13,8 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 Also try [sec-finance-ai](https://github.com/lkcair/sec-finance-ai) for SEC EDGAR filings. ⭐ Star the repo or the skill if you like it.
 
 ---
+
+# 🚀 Thousands of downloads on ClawHub and OpenWebUI
 
 # Quick Start
 
@@ -41,14 +43,14 @@ Without uv: `pip install yfinance-ai`, then use `"command": "yfinance-ai"` with 
 
 All 68 tools are exposed, each marked read-only. Listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.lkcair/yfinance-ai`. MCP server source: [lkcair/yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp).
 
-## 🦞 OpenClaw (ClawHub)
+## 🦞 OpenClaw (ClawHub): thousands of downloads
 
 ```bash
 openclaw skills install @lkcair/stocks
 ```
 Skill page: [clawhub.ai/lkcair/stocks](https://clawhub.ai/lkcair/stocks). You can also download the skill there and upload it to your OpenClaw skills folder.
 
-## 🌐 OpenWebUI
+## 🌐 OpenWebUI: thousands of downloads
 
 1. Open yfinance-ai on the [OpenWebUI website](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1) and click **Get**.
 2. Enter your OpenWebUI address and click **Save** inside your instance.
