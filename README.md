@@ -24,7 +24,7 @@ Needs [uv](https://docs.astral.sh/uv/getting-started/installation/). Nothing to 
 
 **Claude Code**
 ```bash
-claude mcp add yfinance-ai -- uvx yfinance-ai
+claude mcp add yfinance-ai -- uvx yfinance-ai@latest
 ```
 
 **Claude Desktop, Cursor and other clients** (`claude_desktop_config.json`, `.cursor/mcp.json`, ...)
@@ -33,7 +33,7 @@ claude mcp add yfinance-ai -- uvx yfinance-ai
   "mcpServers": {
     "yfinance-ai": {
       "command": "uvx",
-      "args": ["yfinance-ai"]
+      "args": ["yfinance-ai@latest"]
     }
   }
 }
