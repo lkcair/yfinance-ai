@@ -1,23 +1,18 @@
 # yfinance-ai
 
-World's first AI-powered Yahoo Finance integration: 68 tools for stocks, ETFs, mutual funds, crypto, forex and commodities, in one Python file. Thousands of downloads on ClawHub and OpenWebUI.
+World's first AI-powered Yahoo Finance integration: 68 tools for stocks, ETFs, mutual funds, crypto, forex and commodities, in one Python file.
+
+🚀 **Thousands of downloads on ClawHub and OpenWebUI**
 
 Prices and history, financial statements, ratios and valuation history, analyst estimates and price targets, earnings, dividends, options, holders and insiders, funds and ETFs, market movers, sectors and industries, and earnings, IPO, economic and split calendars.
 
 | Use it in | Install | Repo |
 |---|---|---|
 | Claude, Cursor, VS Code and other MCP clients | `uvx yfinance-ai@latest` | [yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp) |
-| OpenClaw, as a ClawHub skill (thousands of downloads) | `openclaw skills install @lkcair/stocks` | [yfinance-ai-skill](https://github.com/lkcair/yfinance-ai-skill) |
-| OpenWebUI, as a tool (thousands of downloads) | [Get it on openwebui.com](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1) | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
+| ClawHub skill for OpenClaw 🚀 Thousands of downloads | `openclaw skills install @lkcair/stocks` | [yfinance-ai-skill](https://github.com/lkcair/yfinance-ai-skill) |
+| OpenWebUI tool 🚀 Thousands of downloads | [Get it on openwebui.com](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1) | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
 | Python | `from yfinance_ai import Tools` | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
 
-## Files
-
-`yfinance_ai.py` holds all 68 tools. The same file is used everywhere:
-
-- OpenWebUI: paste [`yfinance_ai.py`](https://github.com/lkcair/yfinance-ai/blob/main/yfinance_ai.py) as a tool.
-- ClawHub skill: `scripts/yfinance_ai.py`, run by `scripts/cli.py`, with `SKILL.md` for the agent.
-- MCP: the `yfinance-ai` package on PyPI, `yfinance_ai.py` plus `yfinance_ai_mcp.py`.
 
 https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 
