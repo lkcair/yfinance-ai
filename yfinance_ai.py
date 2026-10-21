@@ -4,7 +4,7 @@ description: Complete Financial Data Suite - 68 tools for stocks, crypto, forex,
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lkcair
-version: 5.0.2
+version: 5.0.3
 license: MIT
 requirements: yfinance>=1.7.0,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lkcair/yfinance-ai
@@ -3667,16 +3667,21 @@ class Tools:
         except Exception as e:
             logger.debug(f"Could not get expense ratio from funds_data: {e}")
 
-        # Fallback to info dict
-        if expense_ratio is None:
-            expense_ratio = info.get("annualReportExpenseRatio") or info.get("expenseRatio") or info.get("annualHoldingsTurnover")
+        # funds_data gives a fraction (SPY 0.000945). In info, annualReportExpenseRatio is a
+        # fraction too, while netExpenseRatio is already in percent (SPY 0.0945). Each source is
+        # converted by its own unit; guessing the unit from the size misreads cheap ETFs.
+        expense_pct = float(expense_ratio) * 100 if expense_ratio is not None else None
+        if expense_pct is None and info.get("annualReportExpenseRatio"):
+            expense_pct = float(info["annualReportExpenseRatio"]) * 100
+        if expense_pct is None and info.get("netExpenseRatio"):
+            expense_pct = float(info["netExpenseRatio"])
 
-        if expense_ratio is not None and expense_ratio > 0:
-            # Format expense ratio - handle both decimal (0.0003) and percentage (0.03) formats
-            if expense_ratio < 0.1:
-                result += f"  Expense Ratio: {expense_ratio*100:.2f}%\n"
-            else:
-                result += f"  Expense Ratio: {expense_ratio:.2f}%\n"
+        if expense_pct is not None and expense_pct > 0:
+            result += f"  Expense Ratio: {expense_pct:.2f}%\n"
+
+        turnover = info.get("annualHoldingsTurnover")
+        if turnover:
+            result += f"  Annual Holdings Turnover: {format_percentage(turnover)}\n"
 
         nav = info.get("navPrice")
         if nav:
