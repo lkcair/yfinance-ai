@@ -1,10 +1,10 @@
 """
 title: yfinance-ai - World's First AI-Powered Yahoo Finance Integration
-description: Complete Financial Data Suite - 68 tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, OpenClaw, and any AI assistant with function calling.
+description: Complete Financial Data Suite - 68 tools for stocks, crypto, forex, commodities, ETFs. Real-time prices, fundamentals, analyst data, options, news. Works with OpenWebUI, OpenClaw, MCP clients (Claude, Cursor, VS Code, LangChain, Google ADK, Strands Agents), and any AI assistant with function calling.
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lkcair
-version: 5.0.3
+version: 5.0.4
 license: MIT
 requirements: yfinance>=1.7.0,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lkcair/yfinance-ai
@@ -18,6 +18,7 @@ OPENWEBUI INSTALLATION:
 6. Start asking questions like "What's Apple's stock price?" or "Get Bitcoin price"
 
 OTHER WAYS TO USE IT:
+- MCP server (Claude, Cursor, VS Code, LangChain, Google ADK, Strands Agents): uvx yfinance-ai@latest
 - OpenClaw: openclaw skills install @lkcair/stocks
 - Python: from yfinance_ai import Tools; tools = Tools()  (every tool is an async method)
 

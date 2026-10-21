@@ -8,7 +8,7 @@ Prices and history, financial statements, ratios and valuation history, analyst 
 
 | Use it in | Install | Repo |
 |---|---|---|
-| Claude, Cursor, VS Code and other MCP clients | `uvx yfinance-ai@latest` | [yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp) |
+| Claude, Cursor, VS Code, [LangChain](https://docs.langchain.com/oss/python/langchain/mcp), [Google ADK](https://google.github.io/adk-docs/tools-custom/mcp-tools/), [Strands Agents](https://strandsagents.com/docs/user-guide/sdk/tools/mcp-tools/) and other MCP clients | `uvx yfinance-ai@latest` | [yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp) |
 | ClawHub skill for OpenClaw 🚀 Thousands of downloads | `openclaw skills install @lkcair/stocks` | [yfinance-ai-skill](https://github.com/lkcair/yfinance-ai-skill) |
 | OpenWebUI tool 🚀 Thousands of downloads | [Get it on openwebui.com](https://openwebui.com/posts/finance_data_pull_ai_tool_yahoo_finance_yfinance_fc928bb1) | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
 | Python | `from yfinance_ai import Tools` | [yfinance-ai](https://github.com/lkcair/yfinance-ai) |
@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/f856e26a-4022-418a-98c7-f01e6947d885
 ```bash
 claude mcp add yfinance-ai -- uvx yfinance-ai@latest
 ```
-Setup for VS Code, Claude Desktop, Cursor and other clients: [yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp).
+Setup for VS Code, Claude Desktop, Cursor and other clients, plus LangChain, Google ADK and Strands Agents examples: [yfinance-ai-mcp](https://github.com/lkcair/yfinance-ai-mcp).
 
 **ClawHub (OpenClaw)**
 ```bash
