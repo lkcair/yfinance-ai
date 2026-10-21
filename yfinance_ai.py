@@ -4,7 +4,7 @@ description: Complete Financial Data Suite - 68 tools for stocks, crypto, forex,
 author: lucas0
 author_url: https://lucas0.com
 funding_url: https://github.com/sponsors/lkcair
-version: 5.0.0
+version: 5.0.1
 license: MIT
 requirements: yfinance>=1.7.0,pandas>=2.2.0,pydantic>=2.0.0,requests>=2.28.0
 repository: https://github.com/lkcair/yfinance-ai
